@@ -11,6 +11,8 @@ import * as path from 'node:path';
 import { parsePackageJsonApp } from '../ipc/schema/packageJson';
 import { build } from './esbuild-renderer';
 
+const BOM_OUTPUT = 'sbom.json';
+
 const validate = (packageJson: string) => {
     const result = parsePackageJsonApp(packageJson);
 
@@ -25,13 +27,16 @@ const bundle = () => {
 
     validate(packageJson);
 
-    build({
-        define: {
-            'process.env.PACKAGE_JSON': JSON.stringify(packageJson),
+    build(
+        {
+            define: {
+                'process.env.PACKAGE_JSON': JSON.stringify(packageJson),
+            },
+            entryPoints: ['./src/index.tsx'],
+            outfile: './dist/bundle.js',
         },
-        entryPoints: ['./src/index.tsx'],
-        outfile: './dist/bundle.js',
-    });
+        { bomOutputFile: BOM_OUTPUT },
+    );
 };
 
 const fileInShared = (file: string) =>
