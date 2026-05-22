@@ -35,7 +35,7 @@ type AdditionalOptions = Partial<BuildOptions>;
 const options = (
     additionalOptions: AdditionalOptions,
     externalReact: boolean,
-    bomOutputFile: string | undefined,
+    sbomOutputFile: string | undefined,
 ) =>
     ({
         format: 'iife',
@@ -68,7 +68,7 @@ const options = (
             '.ttf': 'file',
         },
         plugins: [
-            cyclonedxEsbuildPlugin({ outputFile: bomOutputFile }),
+            cyclonedxEsbuildPlugin({ outputFile: sbomOutputFile }),
             sassPlugin({
                 filter: /\.(module|icss)\.scss/,
                 cssImports: true,
@@ -122,25 +122,20 @@ const options = (
         ...additionalOptions,
     }) satisfies BuildOptions;
 
-interface BuildExtras {
-    bomOutputFile?: string;
-    externalReact?: boolean;
-}
-
 export const build = async (
     additionalOptions: AdditionalOptions,
-    { bomOutputFile = undefined, externalReact = false }: BuildExtras = {},
+    { sbomOutputFile = undefined, externalReact = false } = {},
 ) => {
     if (process.argv.includes('--watch')) {
         const context = await esbuild.context(
-            options(additionalOptions, externalReact, bomOutputFile),
+            options(additionalOptions, externalReact, sbomOutputFile),
         );
 
         await context.rebuild();
         await context.watch();
     } else {
         return esbuild.build(
-            options(additionalOptions, externalReact, bomOutputFile),
+            options(additionalOptions, externalReact, sbomOutputFile),
         );
     }
 };

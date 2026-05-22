@@ -11,7 +11,7 @@ import * as path from 'node:path';
 import { parsePackageJsonApp } from '../ipc/schema/packageJson';
 import { build } from './esbuild-renderer';
 
-const BOM_OUTPUT = 'sbom.json';
+const SBOM_OUTPUT = 'sbom.json';
 
 const validate = (packageJson: string) => {
     const result = parsePackageJsonApp(packageJson);
@@ -35,7 +35,7 @@ const bundle = () => {
             entryPoints: ['./src/index.tsx'],
             outfile: './dist/bundle.js',
         },
-        { bomOutputFile: BOM_OUTPUT },
+        { sbomOutputFile: SBOM_OUTPUT },
     );
 };
 
