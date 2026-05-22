@@ -124,7 +124,10 @@ const options = (
 
 export const build = async (
     additionalOptions: AdditionalOptions,
-    { sbomOutputFile = undefined, externalReact = false } = {},
+    {
+        sbomOutputFile,
+        externalReact = false,
+    }: { sbomOutputFile?: string; externalReact?: boolean } = {},
 ) => {
     if (process.argv.includes('--watch')) {
         const context = await esbuild.context(
