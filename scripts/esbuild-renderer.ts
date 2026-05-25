@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
+import { cyclonedxEsbuildPlugin } from '@cyclonedx/cyclonedx-esbuild';
 import { transform as svgr } from '@svgr/core';
 import autoprefixer from 'autoprefixer';
 import esbuild, { type BuildOptions } from 'esbuild';
@@ -34,6 +35,7 @@ type AdditionalOptions = Partial<BuildOptions>;
 const options = (
     additionalOptions: AdditionalOptions,
     externalReact: boolean,
+    sbomOutputFile: string | undefined,
 ) =>
     ({
         format: 'iife',
@@ -66,6 +68,10 @@ const options = (
             '.ttf': 'file',
         },
         plugins: [
+            cyclonedxEsbuildPlugin({
+                outputFile: sbomOutputFile,
+                logLevel: 'warning',
+            }),
             sassPlugin({
                 filter: /\.(module|icss)\.scss/,
                 cssImports: true,
@@ -121,16 +127,21 @@ const options = (
 
 export const build = async (
     additionalOptions: AdditionalOptions,
-    { externalReact = false } = {},
+    {
+        sbomOutputFile,
+        externalReact = false,
+    }: { sbomOutputFile?: string; externalReact?: boolean } = {},
 ) => {
     if (process.argv.includes('--watch')) {
         const context = await esbuild.context(
-            options(additionalOptions, externalReact),
+            options(additionalOptions, externalReact, sbomOutputFile),
         );
 
         await context.rebuild();
         await context.watch();
     } else {
-        return esbuild.build(options(additionalOptions, externalReact));
+        return esbuild.build(
+            options(additionalOptions, externalReact, sbomOutputFile),
+        );
     }
 };

@@ -7,6 +7,12 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
+## 249.0.0 2026-05-25
+
+### Added
+
+- Added SBOM generation for apps
+
 ## 248.0.0 - 2026-05-20
 
 ### Fixed
