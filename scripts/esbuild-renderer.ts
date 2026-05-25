@@ -68,7 +68,10 @@ const options = (
             '.ttf': 'file',
         },
         plugins: [
-            cyclonedxEsbuildPlugin({ outputFile: sbomOutputFile }),
+            cyclonedxEsbuildPlugin({
+                outputFile: sbomOutputFile,
+                logLevel: 'warning',
+            }),
             sassPlugin({
                 filter: /\.(module|icss)\.scss/,
                 cssImports: true,
