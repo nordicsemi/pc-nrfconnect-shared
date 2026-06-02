@@ -29,6 +29,11 @@ export const knownDevicePcas = [
     'PCA10188',
     'PCA10214',
     'PCA10201',
+    'PCA10218',
+    'PCA10226',
+    'PCA10232',
+    'PCA10237',
+    'PCA10208',
 ] as const;
 
 export type KnownDevicePCA = (typeof knownDevicePcas)[number];

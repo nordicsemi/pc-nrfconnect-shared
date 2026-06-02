@@ -7,11 +7,12 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
-## Unreleased
+## 249.0.0 - 2026-06-03
 
 ### Changed
 
 - Adjusted app release workflow for unified docs.
+- Updated list of the supported devices.
 
 ### Steps to upgrade when using this package
 
