@@ -39,6 +39,8 @@ import nrf53logo from '!!@svgr!./nRF53-Series-logo.svg';
 import nrf54logo from '!!@svgr!./nRF54-Series-logo.svg';
 import nrf7002logo from '!!@svgr!./nRF70-Series_no-background_RGB.svg';
 import nrf91logo from '!!@svgr!./nRF91-Series-logo.svg';
+import nrf92logo from '!!@svgr!./nRF92-series-logo.svg';
+import nrf93logo from '!!@svgr!./nRF93-series-logo.svg';
 import ppkLogo from '!!@svgr!./ppk-logo.svg';
 import unknownLogo from '!!@svgr!./unknown-logo.svg';
 import unknownNordicLogo from '!!@svgr!./unknown-nordic-logo.svg';
@@ -313,6 +315,61 @@ const devicesByPca: { [P in KnownDevicePCA]: DeviceInfo } = {
                 'https://www.nordicsemi.com/Products/Development-hardware/nRF9151-SMA-DK',
             buyOnline:
                 'https://www.nordicsemi.com/About-us/BuyOnline?search_token=NRF9151%20SMA%20DK',
+        },
+    },
+    PCA10218: {
+        name: 'nRF9251 DK',
+        cores: 1,
+        icon: nrf92logo,
+        website: {
+            productPage:
+                'https://www.nordicsemi.com/Products/Development-hardware/nRF9251-DK',
+            buyOnline:
+                'https://www.nordicsemi.com/About-us/BuyOnline?search_token=NRF9251%20DK',
+        },
+    },
+    PCA10232: {
+        name: 'nRF93M1 DK',
+        cores: 1,
+        icon: nrf93logo,
+        website: {
+            productPage:
+                'https://www.nordicsemi.com/Products/Development-hardware/nRF93M1-DK',
+            buyOnline:
+                'https://www.nordicsemi.com/About-us/BuyOnline?search_token=nRF93M1%20DK',
+        },
+    },
+    PCA10237: {
+        name: 'nRF93M1 DK',
+        cores: 1,
+        icon: nrf93logo,
+        website: {
+            productPage:
+                'https://www.nordicsemi.com/Products/Development-hardware/nRF93M1-DK',
+            buyOnline:
+                'https://www.nordicsemi.com/About-us/BuyOnline?search_token=nRF93M1%20DK',
+        },
+    },
+    PCA10226: {
+        name: 'nRF54LC10 DK',
+        cores: 1,
+        icon: nrf54logo,
+        website: {
+            productPage:
+                'https://www.nordicsemi.com/Products/Development-hardware/nRF54LC10-DK',
+            buyOnline:
+                'https://www.nordicsemi.com/About-us/BuyOnline?search_token=nRF54LC10%20DK',
+        },
+    },
+    PCA10208: {
+        name: 'nRF54LM20 Dongle',
+        cores: 1,
+        icon: nrf54logo,
+        website: {
+            productPage:
+                'https://www.nordicsemi.com/Software-and-tools/Development-Kits/nRF54LM20-Dongle',
+            buyOnline:
+                'https://www.nordicsemi.com/About-us/BuyOnline?search_token=nRF54LM20DONGLE&series_token=nRF54LM20',
         },
     },
 };

@@ -1,6 +1,6 @@
 {
     "name": "@nordicsemiconductor/pc-nrfconnect-shared",
-    "version": "246.0.0",
+    "version": "247.0.0",
     "description": "Shared commodities for developing pc-nrfconnect-* packages",
     "repository": {
         "type": "git",
