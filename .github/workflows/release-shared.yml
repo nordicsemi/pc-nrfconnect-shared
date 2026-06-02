@@ -25,10 +25,10 @@ jobs:
         env:
             GH_TOKEN: ${{ github.token }}
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
               with:
                   ref: ${{ inputs.ref }}
-            - uses: actions/setup-node@v6
+            - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
               with:
                   node-version: 24
 
@@ -50,7 +50,7 @@ jobs:
 
             - name: Determine next version
               id: determine-next-version
-              uses: actions/github-script@v7
+              uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
               with:
                   script: |
                       const version = require('./package.json').version.replace('.0.0', '');

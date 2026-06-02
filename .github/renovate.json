@@ -1,10 +1,17 @@
 {
     "extends": ["config:recommended", "group:allNonMajor"],
+    "minimumReleaseAge": "7 days",
     "packageRules": [
         {
             "groupName": "Prettier",
             "matchPackageNames": ["prettier"],
             "matchUpdateTypes": ["minor", "patch"]
+        },
+        {
+            "groupName": "GitHub Actions",
+            "matchManagers": ["github-actions"],
+            "pinDigests": true,
+            "separateMajorMinor": false
         }
     ]
 }

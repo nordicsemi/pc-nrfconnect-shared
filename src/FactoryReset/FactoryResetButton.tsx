@@ -5,9 +5,11 @@
  */
 
 import React, { type FC, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { getCurrentWindow } from '@electron/remote';
 
 import Button, { type ButtonVariants } from '../Button/Button';
+import { setActionOnAllComplete } from '../ConfirmBeforeClose/confirmBeforeCloseSlice';
 import { Dialog, DialogButton } from '../Dialog/Dialog';
 import logger from '../logging';
 import { getAppSpecificStore as store } from '../utils/persistentStore';
@@ -32,11 +34,13 @@ const FactoryResetButton: FC<Props> = ({
     classNames,
     large = false,
 }) => {
+    const dispatch = useDispatch();
     const [showDialog, setShowDialog] = useState(false);
     useRef(); // showdialog
     const defaultResetFn = () => {
         store().clear();
         logger.info('Successfully restored defaults');
+        dispatch(setActionOnAllComplete('reload'));
         getCurrentWindow().reload();
     };
 

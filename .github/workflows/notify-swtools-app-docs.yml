@@ -1,0 +1,54 @@
+name: Notify swtools-app-docs about release
+
+on:
+  workflow_call:
+    inputs:
+      project-name:
+        description: Name of the project in `projects.json` in the swtools-app-docs repository (e.g. pc-nrfconnect-ppk)
+        type: string
+        required: true
+      tag:
+        description: Tag to put in `projects.json` (e.g. v1.2.3)
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      project-name:
+        description: Name of the project in `projects.json` in the swtools-app-docs repository (e.g. pc-nrfconnect-ppk)
+        type: string
+        required: true
+      tag:
+        description: Tag to put in `projects.json` (e.g. v1.2.3)
+        type: string
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.JENKINS_NCS_APP_ID }}
+          private-key: ${{ secrets.JENKINS_NCS_APP_PRIVATE_KEY }}
+          owner: nordicsemi
+          repositories: swtools-app-docs
+
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        env:
+          project: ${{ inputs.project-name }}
+          tag: ${{ inputs.tag }}
+          repository: ${{ github.repository }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            github.rest.repos.createDispatchEvent({
+              owner: 'nordicsemi',
+              repo: 'swtools-app-docs',
+              event_type: 'bump-project-tag',
+              client_payload: {
+                project: process.env.project,
+                tag: process.env.tag,
+                repo: `https://github.com/${process.env.repository}`,
+              },
+            });

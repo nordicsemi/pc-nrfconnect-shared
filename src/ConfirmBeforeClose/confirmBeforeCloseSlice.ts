@@ -24,14 +24,17 @@ export type ConfirmBeforeCloseOptionalTitle = Optional<
     'title'
 >;
 
+type OnCompleteAction = 'close' | 'reload';
 export interface ConfirmBeforeCloseState {
     confirmCloseApp: ConfirmBeforeCloseApp[];
     showCloseDialog: boolean;
+    actionOnAllComplete: OnCompleteAction;
 }
 
 const initialState: ConfirmBeforeCloseState = {
     confirmCloseApp: [],
     showCloseDialog: false,
+    actionOnAllComplete: 'close',
 };
 
 const slice = createSlice({
@@ -65,6 +68,9 @@ const slice = createSlice({
         setShowCloseDialog(state, action: PayloadAction<boolean>) {
             state.showCloseDialog = action.payload;
         },
+        setActionOnAllComplete(state, action: PayloadAction<OnCompleteAction>) {
+            state.actionOnAllComplete = action.payload;
+        },
     },
 });
 
@@ -74,6 +80,7 @@ export const {
         addConfirmBeforeClose,
         setShowCloseDialog,
         clearConfirmBeforeClose,
+        setActionOnAllComplete,
     },
 } = slice;
 
@@ -84,6 +91,9 @@ export const getNextConfirmDialog = (state: RootState) =>
 
 export const getShowConfirmCloseDialog = (state: RootState) =>
     state.confirmBeforeCloseDialog.showCloseDialog;
+
+export const getActionOnComplete = (state: RootState) =>
+    state.confirmBeforeCloseDialog.actionOnAllComplete;
 
 export const preventAppCloseUntilComplete =
     (

@@ -65,6 +65,18 @@ const mustContainOneOf = (
     }
 };
 
+export const sameRepoURLs = (url1: string, url2: string) => {
+    const withoutPostfix = (gitUrl: string) => gitUrl.replace(/\.git$/, '');
+
+    const withoutProtocol = (gitUrl: string) =>
+        gitUrl.replace(/^git@[^:]+:/, 'github.com/').replace(/^https:\/\//, '');
+
+    const stripped = (gitUrl: string) =>
+        withoutProtocol(withoutPostfix(gitUrl));
+
+    return stripped(url1) === stripped(url2);
+};
+
 const checkRepoUrl = (packageJson: PackageJsonApp) => {
     if (!existsSync('./.git')) {
         return;
@@ -75,17 +87,7 @@ const checkRepoUrl = (packageJson: PackageJsonApp) => {
     }).trimEnd();
     const declaredGitUrl = packageJson.repository?.url;
 
-    const withoutPostfix = (gitUrl?: string) => gitUrl?.replace(/\.git$/, '');
-
-    const withoutProtocol = (gitUrl?: string) =>
-        gitUrl
-            ?.replace(/^git@github\.com:/, 'github.com/')
-            .replace(/^https:\/\//, '');
-
-    const stripped = (gitUrl?: string) =>
-        withoutProtocol(withoutPostfix(gitUrl));
-
-    if (stripped(realGitUrl) !== stripped(declaredGitUrl)) {
+    if (declaredGitUrl == null || !sameRepoURLs(realGitUrl, declaredGitUrl)) {
         fail(
             `package.json says the repository is located at \`${declaredGitUrl}\` but \`git remote get-url origin\` says it is at \`${realGitUrl}\`.`,
         );

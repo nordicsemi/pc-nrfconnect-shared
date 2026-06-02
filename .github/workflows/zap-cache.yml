@@ -15,7 +15,7 @@ jobs:
         runs-on: ubuntu-latest
         name: Zap Artifactory Cache
         steps:
-            - uses: actions/github-script@v7
+            - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
               env:
                   ARTIFACTORY_TOKEN: ${{ secrets.COM_NORDICSEMI_FILES_PASSWORD_SWTOOLS_FRONTEND }}
                   PATHS: ${{ inputs.paths }}

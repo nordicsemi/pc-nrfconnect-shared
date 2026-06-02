@@ -10,11 +10,11 @@ on:
                 type: string
             node_version:
                 type: number
-            doc_bundle_name:
+            unified_doc_project_name:
                 type: string
         secrets:
             COM_NORDICSEMI_FILES_PASSWORD_SWTOOLS_FRONTEND:
-                required: false
+            GH_PACKAGES_TOKEN:
 
 env:
     ARTIFACT_NAME: ${{ github.event.repository.name }}
@@ -26,6 +26,7 @@ jobs:
             ref: ${{ inputs.ref }}
             force_pack: true
             node_version: ${{ inputs.node_version }}
+        secrets: inherit
 
     release:
         runs-on: ubuntu-latest
@@ -34,6 +35,8 @@ jobs:
             GH_TOKEN: ${{ github.token }}
         environment:
             name: ${{ inputs.source }}
+        outputs:
+            tag: ${{ steps.create_github_release.outputs.tag }}
 
         steps:
             - name: Fail on missing Artifactory token
@@ -46,7 +49,7 @@ jobs:
                   echo '::error::Aborting release because the Artifactory token secret COM_NORDICSEMI_FILES_PASSWORD_SWTOOLS_FRONTEND is missing. To give this repository access to the secret, create a ticket at the CI Help Desk.'
                   exit 1
 
-            - uses: actions/download-artifact@v4
+            - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
               with:
                   name: ${{ env.ARTIFACT_NAME }}
 
@@ -65,6 +68,7 @@ jobs:
                     --source '${{ inputs.source }}'
 
             - name: Create release on GitHub
+              id: create_github_release
               if: inputs.source == 'official (external)'
               run: |
                   TAG="v${{ needs.build.outputs.version }}"
@@ -82,13 +86,15 @@ jobs:
                     --notes-file release_notes.md \
                     ./*.tgz
 
+                  echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
     check-if-docs-exist:
         needs: release
         runs-on: ubuntu-latest
         outputs:
             docs_exist: ${{ steps.check.outputs.docs_exist }}
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
               with:
                   ref: ${{ inputs.ref }}
 
@@ -102,13 +108,13 @@ jobs:
                   fi
 
     publish-docs:
-        needs: check-if-docs-exist
+        needs: [build, release, check-if-docs-exist]
         if: |
-            inputs.doc_bundle_name &&
+            inputs.unified_doc_project_name &&
             inputs.source == 'official (external)' &&
             needs.check-if-docs-exist.outputs.docs_exist == 'true'
-        uses: ./.github/workflows/docs-publish.yml
+        uses: ./.github/workflows/notify-swtools-app-docs.yml
         with:
-            release-type: prod
-            bundle-name: ${{ inputs.doc_bundle_name }}
+            project-name: ${{ inputs.unified_doc_project_name }}
+            tag: ${{ needs.release.outputs.tag }}
         secrets: inherit

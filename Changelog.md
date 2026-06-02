@@ -7,11 +7,39 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
-## 247.0.0 - 2026-06-02
+## 249.0.0 - 2026-06-03
 
 ### Changed
 
+- Adjusted app release workflow for unified docs.
 - Updated list of the supported devices.
+
+### Steps to upgrade when using this package
+
+- Update the workflows as demonstrated in
+  https://github.com/nordicsemi/pc-nrfconnect-boilerplate/pull/168:
+    - Delete the outdated `.github/workflows/docs-bundle.yml`,
+      `.github/workflows/docs-publish-dev.yml`, and
+      `.github/workflows/docs-publish-prod.yml`.
+    - If the project has documentation, then adjust the workflow
+      `.github/workflows/release.yml`: Replace the `doc_bundle_name` property
+      with a property called `unified_doc_project_name` which contains the right
+      project name from
+      https://github.com/nordicsemi/swtools-app-docs/blob/main/projects.json
+      (currently always the name of the project's repository).
+
+## 248.0.0 - 2026-05-20
+
+### Fixed
+
+- In case app is executing important task application will properly reopen when
+  resetting defaults.
+
+## 247.0.0 - 2026-04-23
+
+### Changed
+
+- In the repo URL check, ignore the hostname for ssh git URLs.
 
 ## 246.0.0 - 2026-04-22
 
@@ -48,14 +76,12 @@ structure of `Card` changed. Follow this format:
 import { Card } from '@nordicsemiconductor/pc-nrfconnect-shared';
 
 <Card>
-  <Card.Header className="tw-flex tw-flex-row tw-justify-between">
-    <Card.Header.Title cardTitle="your title here" />
-    { /* your button here */ }
-  </Card.Header>
-  <Card.Body>
-    { /* your card content here */ }
-  </Card.Body>
-</Card>
+    <Card.Header className="tw-flex tw-flex-row tw-justify-between">
+        <Card.Header.Title cardTitle="your title here" />
+        {/* your button here */}
+    </Card.Header>
+    <Card.Body>{/* your card content here */}</Card.Body>
+</Card>;
 ```
 
 ## 244.0.0 - 2026-01-22

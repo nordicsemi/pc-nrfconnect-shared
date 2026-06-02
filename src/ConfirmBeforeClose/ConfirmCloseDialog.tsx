@@ -16,8 +16,10 @@ import {
     type ConfirmBeforeCloseApp,
     getNextConfirmDialog,
     getShowConfirmCloseDialog,
+    setActionOnAllComplete,
     setShowCloseDialog,
 } from './confirmBeforeCloseSlice';
+import { onUserConfirmAll } from './effects';
 
 export default () => {
     const dispatch = useDispatch();
@@ -34,7 +36,7 @@ export default () => {
                 if (confirmedDialog.onClose) confirmedDialog.onClose();
             });
             setConfirmedDialogs([]);
-            getCurrentWindow().close();
+            dispatch(onUserConfirmAll());
         }
     }, [nextConfirmDialog, dispatch, showCloseDialog, confirmedDialogs]);
 
@@ -78,6 +80,7 @@ export default () => {
                     dispatch(addConfirmBeforeClose(confirmedDialog)),
                 );
                 setConfirmedDialogs([]);
+                dispatch(setActionOnAllComplete('close'));
             }}
         >
             {nextConfirmDialog?.message}
