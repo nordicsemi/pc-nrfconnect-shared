@@ -7,6 +7,12 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
+## 250.0.0 - 2026-06-05
+
+### Changed
+
+- nRF92 family will always have modem trait.
+
 ## 249.0.0 - 2026-06-03
 
 ### Changed
