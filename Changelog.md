@@ -18,7 +18,7 @@ every new version is a new major version.
 ### Changed
 
 - Adjusted app release workflow for unified docs.
-- Updated list of the supported devices.
+- Updated the list of supported devices.
 
 ### Steps to upgrade when using this package
 
