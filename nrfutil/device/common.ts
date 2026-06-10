@@ -17,6 +17,7 @@ export const deviceTraitsToArgs = (traits: DeviceTraits) => {
 };
 
 export type ResetKind =
+    | 'RESET_DEFAULT'
     | 'RESET_SYSTEM'
     | 'RESET_HARD'
     | 'RESET_DEBUG'
