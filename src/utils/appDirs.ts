@@ -17,9 +17,11 @@ const getUserDataDir = () => launcherConfig().userDataDir;
  * @returns {string|undefined} Absolute path of current app.
  */
 const getAppDir = () => {
-    const html = packageJsonApp().nrfConnectForDesktop.html;
-    const dir = path.parse(html).dir;
-    return path.parse(__filename).dir.replace(dir, '');
+    const dir =
+        packageJsonApp().nrfConnectForDesktop?.dist ??
+        packageJsonApp().nrfConnectForDesktop?.html;
+    const parsedDir = path.parse(dir).dir;
+    return path.parse(__filename).dir.replace(parsedDir, '');
 };
 
 /**
