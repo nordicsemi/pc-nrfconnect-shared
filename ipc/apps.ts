@@ -37,7 +37,10 @@ interface Installed {
     currentVersion: string;
     engineVersion?: string;
     repositoryUrl?: UrlString;
+    dist?: string;
     html?: string;
+    webHtml?: UrlString;
+    preloadScript?: string;
     nrfutil?: NrfutilModules;
     nrfutilCore?: NrfutilModuleVersion;
     fixedSize?: {
