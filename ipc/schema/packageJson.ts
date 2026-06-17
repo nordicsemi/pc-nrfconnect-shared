@@ -23,9 +23,14 @@ export const parsePackageJson = parseWithPrettifiedErrorMessage(packageJson);
 
 const relativePath = z
     .string()
-    .refine(value => !/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(value), {
-        message: 'Must be a relative path to a file within the app, not a URL',
-    })
+    .min(1, { message: 'Must be a non-empty relative path' })
+    .refine(
+        value => !/^(?![a-zA-Z]:[\\/])[a-zA-Z][a-zA-Z\d+.-]*:/.test(value),
+        {
+            message:
+                'Must be a relative path to a file within the app, not a URL',
+        },
+    )
     .refine(value => !/^[\\/]/.test(value) && !/^[a-zA-Z]:[\\/]/.test(value), {
         message: 'Must be a relative path, not an absolute one',
     })
@@ -53,8 +58,7 @@ const secureUrl = z
         },
     );
 
-// Apps have more required fields in their package.json
-const nrfConnectForDesktopBase = z.object({
+const nrfConnectForDesktop = z.object({
     supportedDevices: z.enum(knownDevicePcas).array().nonempty().optional(),
     nrfutil: nrfModules.optional(),
     nrfutilCore: semver,
@@ -69,30 +73,6 @@ const nrfConnectForDesktopBase = z.object({
         })
         .optional(),
 });
-
-const nrfConnectForDesktop = nrfConnectForDesktopBase.superRefine(
-    (data, ctx) => {
-        const hasHtml = data.html != null;
-        const hasWebHtml = data.webHtml != null;
-
-        if (hasHtml === hasWebHtml) {
-            const message = hasHtml
-                ? 'Only one of `html` or `webHtml` can be set, not both'
-                : 'Either `html` or `webHtml` must be set';
-
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message,
-                path: ['html'],
-            });
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message,
-                path: ['webHtml'],
-            });
-        }
-    },
-);
 
 const recordOfOptionalStrings = z.record(z.string().optional());
 
@@ -126,7 +106,7 @@ export const parsePackageJsonApp =
 // In the launcher we want to handle that the whole nrfConnectForDesktop may be missing
 // and html or nrfutilCore in it can also be undefined, so there we need to use this legacy variant
 const packageJsonLegacyApp = packageJsonApp.extend({
-    nrfConnectForDesktop: nrfConnectForDesktopBase
+    nrfConnectForDesktop: nrfConnectForDesktop
         .extend({ supportedDevices: z.array(z.string()).nonempty().optional() })
         .partial({
             dist: true,
