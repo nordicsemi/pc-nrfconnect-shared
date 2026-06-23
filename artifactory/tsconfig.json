@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "strict": true,
+        "allowImportingTsExtensions": true,
+        "noEmit": true
+    },
+    "include": ["src"]
+}
