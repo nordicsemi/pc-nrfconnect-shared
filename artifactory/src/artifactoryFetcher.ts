@@ -54,12 +54,15 @@ export async function searchAQL(
         await searchResponse.json(),
     );
 
+    console.log(results);
+
     const out: fullAQLresult = { results: [] };
 
     results.results.forEach(result => {
         out.results.push(result.uri);
     });
 
+    console.log(out);
     return out;
 }
 
@@ -81,4 +84,17 @@ export async function downloadArtifact(url: Iurl) {
 
     const blob = await response.blob();
     return blob;
+}
+
+tester();
+
+function tester() {
+    const testData: AQLdata = {
+        server: NordicURL,
+        repo: 'swtools',
+        platform: 'win32-ia32',
+    };
+
+    console.log('Test fetch:');
+    console.log(searchAQL(testData));
 }
