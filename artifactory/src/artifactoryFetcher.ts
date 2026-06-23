@@ -42,8 +42,8 @@ const getAQLurl = (data: Partial<AQLdata>): string => `https://${
     data.server ? data.server : NordicURL
 }/artifactory/api/search/prop?repos=${
     data.repo ? data.repo : 'swtools'
-}&version=${data.version ? data.version : ''}
-  &platform=${data.platform ? data.platform : ''}&main_download=true`;
+}${data.version ? '&version=' + data.version : ''}
+  ${data.platform ? '&platform=' + data.platform : ''}&main_download=true`;
 
 export async function searchAQL(
     AQLdata: Partial<AQLdata>,
