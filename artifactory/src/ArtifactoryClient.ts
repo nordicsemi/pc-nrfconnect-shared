@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { HttpClient } from './httpClient.js';
+import { HttpClient } from './httpClient.ts';
 
 export type AUrlData = {
     server: string;

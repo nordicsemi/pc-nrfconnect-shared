@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { AQLClient, type AQLQueryData, type AQLResult } from './AQLClient.js';
-import { ArtifactoryClient, type AUrlData } from './ArtifactoryClient.js';
+import { AQLClient, type AQLQueryData, type AQLResult } from './AQLClient.ts';
+import { ArtifactoryClient, type AUrlData } from './ArtifactoryClient.ts';
 
 export const NordicURL: string = 'files.nordicsemi.com';
 
