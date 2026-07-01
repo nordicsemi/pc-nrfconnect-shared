@@ -27,7 +27,9 @@ export type { DialogButtonProps } from './Dialog/Dialog';
 
 export { default as Slider } from './Slider/Slider';
 export { type Range, type RangeOrValues, type Values } from './Slider/range';
-
+export { AQLClient } from './artifactory/AQLClient';
+export { ArtifactoryClient } from './artifactory/ArtifactoryClient';
+export { default as Testpane } from './artifactory/Testpane';
 export { Toggle } from './Toggle/Toggle';
 export { default as RootErrorDialog } from './ErrorDialog/ErrorDialog';
 export { Alert } from './Alert/Alert';

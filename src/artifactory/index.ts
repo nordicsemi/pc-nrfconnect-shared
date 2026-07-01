@@ -4,18 +4,24 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
+import path from 'path';
+
 import { AQLClient, type AQLQueryData, type AQLResult } from './AQLClient.js';
 import { ArtifactoryClient, type AUrlData } from './ArtifactoryClient.js';
 
+const downloadPath: string = path.resolve(
+    __dirname,
+    '../resources/firmware/downloads',
+);
+
 export const NordicURL: string = 'files.nordicsemi.com';
 
-tester();
-
-async function tester() {
+export const tester = async () => {
     const testData: AQLQueryData = {
         server: NordicURL,
         repo: 'swtools',
-        platform: 'win32-x64',
+        platform: 'linux-x64',
+        version: 'v5.3.*',
     };
 
     const fetcher = new AQLClient();
@@ -33,7 +39,5 @@ async function tester() {
 
     const downloader = new ArtifactoryClient();
 
-    const blob = await downloader.downloadArtifact(url);
-
-    console.log(blob);
-}
+    downloader.downloadArtifact(url, downloadPath);
+};
