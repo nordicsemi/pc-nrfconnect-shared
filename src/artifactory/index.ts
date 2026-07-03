@@ -6,10 +6,10 @@
 
 import path from 'path';
 
-import { AQLClient, type AQLQueryData, type AQLResult } from './AQLClient.js';
 import { ArtifactoryClient, type AUrlData } from './ArtifactoryClient.js';
+import { type AQueryData, type AResponse, PropsClient } from './PropsClient.js';
 
-const downloadPath: string = path.resolve(
+export const downloadPath: string = path.resolve(
     __dirname,
     '../resources/firmware/downloads',
 );
@@ -17,24 +17,23 @@ const downloadPath: string = path.resolve(
 export const NordicURL: string = 'files.nordicsemi.com';
 
 export const tester = async () => {
-    const testData: AQLQueryData = {
+    const testData: AQueryData = {
         server: NordicURL,
         repo: 'swtools',
-        platform: 'linux-x64',
-        version: 'v5.3.*',
+        searchProps: { device: 'nrf9160', type: 'Modem', latest: 'true' },
     };
 
-    const fetcher = new AQLClient();
+    const fetcher = new PropsClient();
 
-    const data: AQLResult = await fetcher.searchAQL(testData);
+    const data: AResponse = await fetcher.searchArtifactory(testData);
 
     console.log('Test fetch:');
     console.log(data);
 
     const url: AUrlData = {
-        server: data.query.server,
-        repo: data.query.repo,
-        path: data.data[0].path,
+        server: NordicURL,
+        path: data[0].path,
+        repo: data[0].repo,
     };
 
     const downloader = new ArtifactoryClient();

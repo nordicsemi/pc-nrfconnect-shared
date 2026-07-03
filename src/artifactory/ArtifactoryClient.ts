@@ -7,15 +7,13 @@
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 
-import { HttpClient } from './httpClient.js';
-
 export type AUrlData = {
     server: string;
     repo: string;
     path: string;
 };
 
-export class ArtifactoryClient extends HttpClient<AUrlData> {
+export class ArtifactoryClient {
     protected getUrl(input: AUrlData): string {
         return `https://${input.server}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${input.repo}&path=${input.path}`;
         // `https://${input.server}/artifactory/${input.repo}${input.path}`;
