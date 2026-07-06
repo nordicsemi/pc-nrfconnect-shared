@@ -38,10 +38,10 @@ const registerGetAccessToken = handle<GetAccessToken>(channel.getAccessToken);
 const getAccountInfo = invoke<GetAccountInfo>(channel.getAccount);
 const registerGetAccountInfo = handle<GetAccountInfo>(channel.getAccount);
 
-export const inMain = { startLogin, getAccountInfo, logout, getAccessToken };
 export const forRenderer = {
     registerStartLogin,
     registerGetAccountInfo,
     registerLogout,
     registerGetAccessToken,
 };
+export const inMain = { startLogin, getAccountInfo, logout, getAccessToken };
