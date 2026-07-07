@@ -14,15 +14,23 @@ export type AUrlData = {
 };
 
 export class ArtifactoryClient {
-    protected getUrl(input: AUrlData): string {
+    public getUrl(input: AUrlData): string {
         return `https://${input.server}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${input.repo}&path=${input.path}`;
-        // `https://${input.server}/artifactory/${input.repo}${input.path}`;
     }
 
     public async downloadArtifact(input: AUrlData, dir: string): Promise<void> {
-        dir = path.resolve(`${dir}${input.path}`);
+        dir = path.resolve(`${dir}${input.path.split('/')[-1]}`);
         mkdir(path.dirname(dir), { recursive: true });
         const url: string = this.getUrl(input);
+        const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
+        await writeFile(dir, buffer);
+    }
+
+    public async downloadArtifactFromUrl(
+        url: string,
+        dir: string,
+    ): Promise<void> {
+        mkdir(path.dirname(dir), { recursive: true });
         const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
         await writeFile(dir, buffer);
     }
