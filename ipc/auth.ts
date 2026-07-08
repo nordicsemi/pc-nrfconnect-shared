@@ -18,19 +18,31 @@ export interface AccountInfo {
     name?: string;
 }
 
-export type LoginResult = { ok: true } | { ok: false; error: string };
+export type GenericAuthResult<T> =
+    | { status: true; data: T }
+    | { status: false; error: string };
+
+// export type LoginResult = { ok: true } | { ok: false; error: string };
 
 // The logical type is not wrapped in a promise. Invoke adds the promise itself.
-type StartLogin = () => LoginResult;
-type Logout = () => void;
-type GetAccessToken = () => string | null;
-type GetAccountInfo = () => AccountInfo | null;
+type StartLogin = () => GenericAuthResult<undefined>;
+type LocalLogout = () => GenericAuthResult<undefined>;
+type SingleSignOut = () => GenericAuthResult<undefined>;
+type CheckLoginStatus = () => GenericAuthResult<boolean>;
+type GetAccessToken = () => GenericAuthResult<string>;
+type GetAccountInfo = () => GenericAuthResult<AccountInfo>;
 
 const startLogin = invoke<StartLogin>(channel.start);
 const registerStartLogin = handle<StartLogin>(channel.start);
 
-const logout = invoke<Logout>(channel.logout);
-const registerLogout = handle<Logout>(channel.logout);
+const localLogout = invoke<LocalLogout>(channel.logout);
+const registerLocalLogout = handle<LocalLogout>(channel.logout);
+
+const singleSignOut = invoke<SingleSignOut>(channel.logout);
+const registerSingleSignOut = handle<SingleSignOut>(channel.logout);
+
+const checkLoginStatus = invoke<CheckLoginStatus>(channel.start);
+const registerCheckLoginStatus = handle<CheckLoginStatus>(channel.start);
 
 const getAccessToken = invoke<GetAccessToken>(channel.getAccessToken);
 const registerGetAccessToken = handle<GetAccessToken>(channel.getAccessToken);
@@ -41,7 +53,16 @@ const registerGetAccountInfo = handle<GetAccountInfo>(channel.getAccount);
 export const forRenderer = {
     registerStartLogin,
     registerGetAccountInfo,
-    registerLogout,
+    registerLocalLogout,
+    registerSingleSignOut,
+    registerCheckLoginStatus,
     registerGetAccessToken,
 };
-export const inMain = { startLogin, getAccountInfo, logout, getAccessToken };
+export const inMain = {
+    startLogin,
+    getAccountInfo,
+    localLogout,
+    singleSignOut,
+    checkLoginStatus,
+    getAccessToken,
+};
