@@ -17,3 +17,13 @@ window.ResizeObserver = class {
     disconnect() {} // eslint-disable-line no-empty-function,class-methods-use-this
     unobserve() {} // eslint-disable-line no-empty-function,class-methods-use-this
 };
+
+if (
+    typeof globalThis.TextEncoder === 'undefined' ||
+    typeof globalThis.TextDecoder === 'undefined'
+) {
+    // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
+    const utils = require('util');
+    globalThis.TextEncoder = utils.TextEncoder;
+    globalThis.TextDecoder = utils.TextDecoder;
+}

@@ -7,6 +7,26 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
+## 253.0.0 - 2026-07-03
+
+### Changed
+
+- Updated and pinned protobufjs dependency. There was a vulnerability in old
+  protobufjs versions. https://github.com/advisories/GHSA-wcpc-wj8m-hjx6
+
+    The preconditions from the advisory are not really met in our case, but
+    updating is low effort.
+
+### Added
+
+- Mocking of global `TextEncoder` and `TextDecoder`.
+
+### Steps to upgrade when using this package
+
+- In `pc-nrfconnect-matter-quickstart`, `pc-nrfconnect-cellularmonitor`, and
+  `pc-nrfconnect-ble-5`: Remove the now obsolete mocking of `TextEncoder` and
+  `TextDecoder`.
+
 ## 252.0.0 - 2026-06-10
 
 ### Changed
