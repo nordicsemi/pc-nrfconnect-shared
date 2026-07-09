@@ -37,7 +37,7 @@ export {
     ArtifactoryClient,
     type AUrlData,
 } from './artifactory/ArtifactoryClient';
-export { FirmwareManager, type Firmware } from './artifactory/cache';
+export { FirmwareManager, type Firmware } from './artifactory/FirmwareManager';
 export { Testpane } from './artifactory/Testpane';
 
 export { Toggle } from './Toggle/Toggle';

@@ -17,15 +17,15 @@ export const Testpane: React.FC = () => {
     const searcher = new PropsClient();
     const fetcher = new ArtifactoryClient();
 
-    const handleSearch = async () => {
+    const handleSearch = async (inDevice: string, inType: string) => {
         console.log({ type, device });
 
         const query: AQueryData = {
             server: NordicURL,
             repo: 'swtools',
             searchProps: {
-                device,
-                type,
+                device: inDevice,
+                type: inType,
             },
         };
 
@@ -79,7 +79,12 @@ export const Testpane: React.FC = () => {
                 ))}
             </select>
 
-            <button type="button" onClick={handleSearch}>
+            <button
+                type="button"
+                onClick={() => {
+                    handleSearch(device, type);
+                }}
+            >
                 Fetch
             </button>
             <button type="button" onClick={clickTest}>

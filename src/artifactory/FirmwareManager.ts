@@ -5,7 +5,7 @@
  */
 
 import { mkdir, readFile, unlink, writeFile } from 'fs/promises';
-import { dirname, resolve } from 'path';
+import { dirname, join, resolve } from 'path';
 import { z } from 'zod';
 
 import { NordicURL } from '.';
@@ -46,33 +46,43 @@ export type SourceList = z.infer<typeof SourceListScheme>;
 export class FirmwareManager {
     REPO: string;
     SERVER: string;
-    FILEDIR: string;
-    REQFIRMFILE: string;
+    BUNDLEDDIR: string;
+    DATADIR: string;
     Fetcher: PropsClient;
     Downloader: ArtifactoryClient;
 
     constructor(
-        directory: string,
-        requriedfirmwarefile: string,
+        dataDirectory: string,
+        bundledDirectory: string,
         server: string = NordicURL,
         repo: string = 'swtools',
     ) {
         this.SERVER = server;
         this.REPO = repo;
-        this.FILEDIR = resolve(directory);
-        this.REQFIRMFILE = resolve(requriedfirmwarefile);
+        this.DATADIR = resolve(dataDirectory);
+        this.BUNDLEDDIR = resolve(bundledDirectory);
         this.Fetcher = new PropsClient();
         this.Downloader = new ArtifactoryClient();
     }
 
-    private async loadSource(): Promise<SourceList> {
+    private async loadFile<T>(file: string): Promise<T> {
         try {
+            const content = await readFile(join(this.DATADIR, file), 'utf-8');
+            return SourceListScheme.parse(JSON.parse(content)) as T;
+        } catch {
             const content = await readFile(
-                `${this.FILEDIR}source.json`,
+                join(this.BUNDLEDDIR, file),
                 'utf-8',
             );
-            return SourceListScheme.parse(JSON.parse(content));
-        } catch {
+            return SourceListScheme.parse(JSON.parse(content)) as T;
+        }
+    }
+
+    private async loadSource(): Promise<SourceList> {
+        try {
+            return await this.loadFile<SourceList>('source.json');
+        } catch (e) {
+            console.log(`couldnt find file, got error: ${e}`);
             return {
                 firmwares: [],
             };
@@ -81,10 +91,12 @@ export class FirmwareManager {
 
     private async loadReqList(): Promise<ReqList> {
         try {
-            const content = await readFile(this.REQFIRMFILE, 'utf-8');
-            return JSON.parse(content);
-        } catch {
-            return {};
+            return await this.loadFile<ReqList>('requested.json');
+        } catch (e) {
+            console.log(`couldnt find file, got error: ${e}`);
+            return {
+                firmwares: [],
+            };
         }
     }
 
@@ -100,8 +112,12 @@ export class FirmwareManager {
     }
 
     private async saveSource(source: SourceList): Promise<void> {
-        await mkdir(dirname(this.FILEDIR), { recursive: true });
-        await writeFile(this.FILEDIR, JSON.stringify(source, null, 2), 'utf-8');
+        await mkdir(dirname(this.DATADIR), { recursive: true });
+        await writeFile(
+            join(this.DATADIR, 'source.json'),
+            JSON.stringify(source, null, 2),
+            'utf-8',
+        );
     }
 
     private async putSource(fw: Firmware): Promise<void> {
@@ -163,7 +179,10 @@ export class FirmwareManager {
     }
 
     private async downloadFirmware(f: Firmware): Promise<string> {
-        await this.Downloader.downloadArtifactFromUrl(f.file, this.FILEDIR);
+        await this.Downloader.downloadArtifactFromUrl(
+            f.file,
+            join(this.DATADIR, 'firmware'),
+        );
         await this.removeSource(f);
         const path = f.file.split('/')[-1];
         await this.putSource({ ...f, file: path });
@@ -198,5 +217,4 @@ export class FirmwareManager {
             }),
         };
     }
-    // TODO add methods for fetching REQFIRMWARE from artifactory and update SOURCELIST
 }
