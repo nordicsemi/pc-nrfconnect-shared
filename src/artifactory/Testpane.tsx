@@ -10,6 +10,7 @@ import { ArtifactoryClient } from './ArtifactoryClient';
 import { type AQueryData, type AResponse, PropsClient } from './PropsClient';
 
 export const Testpane: React.FC = () => {
+    const [name, setName] = React.useState('');
     const [device, setDevice] = React.useState('');
     const [type, setType] = React.useState('');
 
@@ -48,13 +49,29 @@ export const Testpane: React.FC = () => {
         'nRF52840DK',
     ];
 
+    const names: string[] = [
+        'hello_world',
+        'lbs',
+        'peripheral_uart',
+        'power_profiling',
+        'asset_tracker',
+    ];
+
     const types: string[] = ['Application', 'Modem', 'Network'];
 
     return (
         <>
+            <select value={name} onChange={e => setName(e.target.value)}>
+                {names.map(n => (
+                    <option key={n} value={n.toLowerCase()}>
+                        {n}
+                    </option>
+                ))}
+            </select>
+
             <select value={device} onChange={e => setDevice(e.target.value)}>
                 {devices.map(d => (
-                    <option key={d.toLowerCase()} value={d.toLowerCase()}>
+                    <option key={d} value={d.toLowerCase()}>
                         {d}
                     </option>
                 ))}

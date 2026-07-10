@@ -5,7 +5,7 @@
  */
 
 import { mkdir, writeFile } from 'fs/promises';
-import path from 'path';
+import { dirname, resolve } from 'path';
 
 export type AUrlData = {
     server: string;
@@ -14,13 +14,27 @@ export type AUrlData = {
 };
 
 export class ArtifactoryClient {
-    public getUrl(input: AUrlData): string {
-        return `https://${input.server}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${input.repo}&path=${input.path}`;
+    SERVER: string | undefined;
+    REPO: string | undefined;
+    DIR: string | undefined;
+
+    constructor(server?: string, repo?: string, dir?: string) {
+        this.SERVER = server;
+        this.REPO = repo;
+        this.DIR = dir;
     }
 
-    public async downloadArtifact(input: AUrlData, dir: string): Promise<void> {
-        dir = path.resolve(`${dir}${input.path.split('/')[-1]}`);
-        mkdir(path.dirname(dir), { recursive: true });
+    public getUrl = (input: AUrlData): string =>
+        `https://${this.SERVER ?? input.server}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${this.REPO ?? input.repo}&path=${input.path}`;
+
+    public async downloadArtifact(
+        input: AUrlData,
+        downloadDir: string,
+    ): Promise<void> {
+        const dir = resolve(
+            `${this.DIR ?? downloadDir}${input.path.split('/')[-1]}`,
+        );
+        mkdir(dirname(dir), { recursive: true });
         const url: string = this.getUrl(input);
         const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
         await writeFile(dir, buffer);
@@ -28,9 +42,10 @@ export class ArtifactoryClient {
 
     public async downloadArtifactFromUrl(
         url: string,
-        dir: string,
+        downloadDir: string,
     ): Promise<void> {
-        mkdir(path.dirname(dir), { recursive: true });
+        const dir = resolve(this.DIR ?? downloadDir);
+        mkdir(dirname(dir), { recursive: true });
         const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
         await writeFile(dir, buffer);
     }

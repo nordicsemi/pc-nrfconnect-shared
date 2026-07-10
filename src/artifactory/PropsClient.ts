@@ -46,10 +46,18 @@ const AResponseScheme = z.array(
 export type AResponse = z.infer<typeof AResponseScheme>;
 
 export class PropsClient {
-    getUrl(data: AQueryData): string {
+    SERVER: string | undefined;
+    REPO: string | undefined;
+
+    constructor(server?: string, repo?: string) {
+        this.SERVER = server;
+        this.REPO = repo;
+    }
+
+    public getUrl(data: AQueryData): string {
         const parts: string[] = [];
         parts.push(
-            `https://${data.server}/artifactory/api/search/prop?repos=${data.repo}&main_download=true`,
+            `https://${this.SERVER ?? data.server}/artifactory/api/search/prop?repos=${this.REPO ?? data.repo}&main_download=true`,
         );
 
         Object.entries(data.searchProps).forEach(([key, value]) => {

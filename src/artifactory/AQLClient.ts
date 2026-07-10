@@ -36,13 +36,20 @@ const AQLResponseScheme = z.object({
 export type AQLResponse = z.infer<typeof AQLResponseScheme>;
 
 export class AQLClient {
-    Url = (data: AQueryData) =>
-        `https://${data.server}/artifactory/api/search/aql`;
+    SERVER: string;
+    REPO: string;
+
+    constructor(server: string, repo: string) {
+        this.SERVER = server;
+        this.REPO = repo;
+    }
+
+    Url = () => `https://${this.SERVER}/artifactory/api/search/aql`;
 
     getProps(data: AQueryData): string {
         const searchProps: string[] = [
             `"@main_download": "true"`,
-            `"repo": "${data.repo}"`,
+            `"repo": "${this.REPO}"`,
         ];
 
         Object.entries(data.searchProps).forEach(([key, value]) => {
@@ -64,7 +71,7 @@ export class AQLClient {
         authentication?: string,
     ): Promise<AQLResponse> {
         const res = AQLResponseScheme.parse(
-            await fetch(this.Url(data), {
+            await fetch(this.Url(), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'text/plain',
