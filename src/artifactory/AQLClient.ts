@@ -3,6 +3,9 @@
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
+/**
+ * @deprecated Nordic fileserver doesn't allow external AQL searches use ArtifactoryClient for props based searching and downloading instead
+ */
 
 import { z } from 'zod';
 

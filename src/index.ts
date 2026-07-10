@@ -29,15 +29,14 @@ export { default as Slider } from './Slider/Slider';
 export { type Range, type RangeOrValues, type Values } from './Slider/range';
 
 export {
-    PropsClient,
-    type AQueryData,
-    type AResponse,
-} from './artifactory/PropsClient';
-export {
     ArtifactoryClient,
-    type AUrlData,
+    type AResponse,
 } from './artifactory/ArtifactoryClient';
-export { FirmwareManager, type Firmware } from './artifactory/FirmwareManager';
+export {
+    FirmwareManager,
+    type Firmware,
+    type ReqList,
+} from './artifactory/FirmwareManager';
 export { Testpane } from './artifactory/Testpane';
 
 export { Toggle } from './Toggle/Toggle';

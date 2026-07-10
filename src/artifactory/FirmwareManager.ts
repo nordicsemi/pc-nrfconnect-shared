@@ -8,9 +8,8 @@ import { mkdir, readFile, unlink, writeFile } from 'fs/promises';
 import { dirname, join, resolve } from 'path';
 import { z } from 'zod';
 
-import { NordicURL } from '.';
+import { getAppDataDir, getAppDir } from '../utils/appDirs';
 import { ArtifactoryClient } from './ArtifactoryClient';
-import { PropsClient } from './PropsClient';
 
 const FirmwareScheme = z.object({
     name: z.string(),
@@ -48,21 +47,23 @@ export class FirmwareManager {
     SERVER: string;
     BUNDLEDDIR: string;
     DATADIR: string;
-    Fetcher: PropsClient;
-    Downloader: ArtifactoryClient;
+    Client: ArtifactoryClient;
 
     constructor(
-        dataDirectory: string,
-        bundledDirectory: string,
-        server: string = NordicURL,
+        dataDirectory: string = join(getAppDataDir(), 'resources', 'firmware'),
+        bundledDirectory: string = getAppDir(),
+        server: string = 'files.nordicsemi.com',
         repo: string = 'swtools',
     ) {
         this.SERVER = server;
         this.REPO = repo;
         this.DATADIR = resolve(dataDirectory);
         this.BUNDLEDDIR = resolve(bundledDirectory);
-        this.Fetcher = new PropsClient();
-        this.Downloader = new ArtifactoryClient();
+        this.Client = new ArtifactoryClient(
+            this.SERVER,
+            this.REPO,
+            join(this.DATADIR, 'firmware'),
+        );
     }
 
     private async loadFile<T>(file: string): Promise<T> {
@@ -179,10 +180,7 @@ export class FirmwareManager {
     }
 
     private async downloadFirmware(f: Firmware): Promise<string> {
-        await this.Downloader.downloadArtifactFromUrl(
-            f.file,
-            join(this.DATADIR, 'firmware'),
-        );
+        await this.Client.downloadArtifactFromUrl(f.file);
         await this.removeSource(f);
         const path = f.file.split('/')[-1];
         await this.putSource({ ...f, file: path });
@@ -190,15 +188,11 @@ export class FirmwareManager {
     }
 
     private async fetchFirmware(fw: ReqFirmware): Promise<Firmware> {
-        const res = await this.Fetcher.searchArtifactory({
-            server: this.SERVER,
-            repo: this.REPO,
-            searchProps: {
-                type: fw.type,
-                name: fw.name,
-                device: fw.device,
-                latest: 'true',
-            },
+        const res = await this.Client.searchArtifactory({
+            type: fw.type,
+            name: fw.name,
+            device: fw.device,
+            latest: 'true',
         });
 
         if (res.length !== 1) {
@@ -210,11 +204,7 @@ export class FirmwareManager {
             type: res[0].properties.type[0],
             version: res[0].properties.version[0],
             device: res[0].properties.device[0],
-            file: this.Downloader.getUrl({
-                server: this.SERVER,
-                repo: this.REPO,
-                path: res[0].path,
-            }),
+            file: this.Client.downloadUrl(res[0].path),
         };
     }
 }

@@ -4,10 +4,14 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 import React from 'react';
+import { join } from 'node:path';
 
-import { downloadPath, NordicURL } from '.';
+import { getAppDataDir } from '../utils/appDirs';
 import { ArtifactoryClient } from './ArtifactoryClient';
 import { type AQueryData, type AResponse, PropsClient } from './PropsClient';
+
+const NordicURL = 'files.noridcsemi.com';
+const downloadPath = join(getAppDataDir(), 'firmware');
 
 export const Testpane: React.FC = () => {
     const [name, setName] = React.useState('');
