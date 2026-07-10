@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 import React from 'react';
-import { join } from 'node:path';
+import { join } from 'path';
 
 import { getAppDataDir } from '../utils/appDirs';
 import { type AResponse, ArtifactoryClient } from './ArtifactoryClient';
