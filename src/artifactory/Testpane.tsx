@@ -5,12 +5,11 @@
  */
 import React from 'react';
 
-import { downloadPath, NordicURL, tester } from '.';
-import { ArtifactoryClient } from './ArtifactoryClient.js';
-import { type AQueryData, type AResponse, PropsClient } from './PropsClient.js';
+import { downloadPath, NordicURL } from '.';
+import { ArtifactoryClient } from './ArtifactoryClient';
+import { type AQueryData, type AResponse, PropsClient } from './PropsClient';
 
 export const Testpane: React.FC = () => {
-    const [value, setValue] = React.useState('');
     const [device, setDevice] = React.useState('');
     const [type, setType] = React.useState('');
 
@@ -40,9 +39,6 @@ export const Testpane: React.FC = () => {
             downloadPath,
         );
     };
-    const clickTest = () => {
-        console.log('test');
-    };
 
     const devices: string[] = [
         'nRF9151DK',
@@ -56,13 +52,6 @@ export const Testpane: React.FC = () => {
 
     return (
         <>
-            <input
-                type="text"
-                value={value}
-                onChange={e => setValue(e.target.value)}
-                placeholder="Type something..."
-            />
-
             <select value={device} onChange={e => setDevice(e.target.value)}>
                 {devices.map(d => (
                     <option key={d.toLowerCase()} value={d.toLowerCase()}>
@@ -85,13 +74,7 @@ export const Testpane: React.FC = () => {
                     handleSearch(device, type);
                 }}
             >
-                Fetch
-            </button>
-            <button type="button" onClick={clickTest}>
                 Test
-            </button>
-            <button type="button" onClick={tester}>
-                Run
             </button>
         </>
     );

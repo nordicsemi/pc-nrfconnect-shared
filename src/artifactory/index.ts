@@ -6,8 +6,8 @@
 
 import path from 'path';
 
-import { ArtifactoryClient, type AUrlData } from './ArtifactoryClient.js';
-import { type AQueryData, type AResponse, PropsClient } from './PropsClient.js';
+import { ArtifactoryClient, type AUrlData } from './ArtifactoryClient';
+import { type AQueryData, type AResponse, PropsClient } from './PropsClient';
 
 export const downloadPath: string = path.resolve(
     __dirname,
