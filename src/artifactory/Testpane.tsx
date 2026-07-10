@@ -17,8 +17,12 @@ export const Testpane: React.FC = () => {
     const searcher = new PropsClient();
     const fetcher = new ArtifactoryClient();
 
-    const handleSearch = async (inDevice: string, inType: string) => {
-        console.log({ type, device });
+    const handleSearch = async (
+        inDevice: string,
+        inType: string,
+        inName: string,
+    ) => {
+        console.log({ name, device, type });
 
         const query: AQueryData = {
             server: NordicURL,
@@ -26,6 +30,7 @@ export const Testpane: React.FC = () => {
             searchProps: {
                 device: inDevice,
                 type: inType,
+                name: inName,
             },
         };
 
@@ -42,6 +47,7 @@ export const Testpane: React.FC = () => {
     };
 
     const devices: string[] = [
+        '',
         'nRF9151DK',
         'nRF9160DK',
         'nRF9161DK',
@@ -50,18 +56,24 @@ export const Testpane: React.FC = () => {
     ];
 
     const names: string[] = [
+        '',
         'hello_world',
         'lbs',
         'peripheral_uart',
         'power_profiling',
         'asset_tracker',
+        'modemfirmware',
     ];
 
-    const types: string[] = ['Application', 'Modem', 'Network'];
+    const types: string[] = ['', 'Application', 'Modem', 'Network'];
 
     return (
         <>
-            <select value={name} onChange={e => setName(e.target.value)}>
+            <select
+                className="m-10 tw-min-w-20"
+                value={name}
+                onChange={e => setName(e.target.value)}
+            >
                 {names.map(n => (
                     <option key={n} value={n.toLowerCase()}>
                         {n}
@@ -69,7 +81,11 @@ export const Testpane: React.FC = () => {
                 ))}
             </select>
 
-            <select value={device} onChange={e => setDevice(e.target.value)}>
+            <select
+                className="m-10 tw-min-w-20"
+                value={device}
+                onChange={e => setDevice(e.target.value)}
+            >
                 {devices.map(d => (
                     <option key={d} value={d.toLowerCase()}>
                         {d}
@@ -77,7 +93,11 @@ export const Testpane: React.FC = () => {
                 ))}
             </select>
 
-            <select value={type} onChange={e => setType(e.target.value)}>
+            <select
+                className="m-10 tw-min-w-20"
+                value={type}
+                onChange={e => setType(e.target.value)}
+            >
                 {types.map(t => (
                     <option key={t} value={t}>
                         {t}
@@ -88,7 +108,7 @@ export const Testpane: React.FC = () => {
             <button
                 type="button"
                 onClick={() => {
-                    handleSearch(device, type);
+                    handleSearch(device, type, name);
                 }}
             >
                 Test
