@@ -7,8 +7,7 @@ import React from 'react';
 import { join } from 'node:path';
 
 import { getAppDataDir } from '../utils/appDirs';
-import { ArtifactoryClient } from './ArtifactoryClient';
-import { type AQueryData, type AResponse, PropsClient } from './PropsClient';
+import { type AResponse, ArtifactoryClient } from './ArtifactoryClient';
 
 const NordicURL = 'files.noridcsemi.com';
 const downloadPath = join(getAppDataDir(), 'firmware');
@@ -18,8 +17,7 @@ export const Testpane: React.FC = () => {
     const [device, setDevice] = React.useState('');
     const [type, setType] = React.useState('');
 
-    const searcher = new PropsClient();
-    const fetcher = new ArtifactoryClient();
+    const Client = new ArtifactoryClient(NordicURL, 'swtools', downloadPath);
 
     const handleSearch = async (
         inDevice: string,
@@ -28,26 +26,15 @@ export const Testpane: React.FC = () => {
     ) => {
         console.log({ name, device, type });
 
-        const query: AQueryData = {
-            server: NordicURL,
-            repo: 'swtools',
-            searchProps: {
-                device: inDevice,
-                type: inType,
-                name: inName,
-            },
+        const query = {
+            device: inDevice,
+            type: inType,
+            name: inName,
         };
 
-        const res: AResponse = await searcher.searchArtifactory(query);
+        const res: AResponse = await Client.searchArtifactory(query);
 
-        fetcher.downloadArtifact(
-            {
-                server: NordicURL,
-                repo: 'swtools',
-                path: res[0].path,
-            },
-            downloadPath,
-        );
+        Client.downloadArtifact(res[0].path);
     };
 
     const devices: string[] = [
