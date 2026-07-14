@@ -50,8 +50,8 @@ export class FirmwareManager {
     Client: ArtifactoryClient;
 
     constructor(
-        dataDirectory: string = join(getAppDataDir(), 'resources', 'firmware'),
-        bundledDirectory: string = getAppDir(),
+        dataDirectory: string = getAppDataDir(),
+        bundledDirectory: string = join(getAppDir(), 'resources', 'firmware'),
         server: string = 'files.nordicsemi.com',
         repo: string = 'swtools',
     ) {
@@ -69,13 +69,13 @@ export class FirmwareManager {
     private async loadFile<T>(file: string): Promise<T> {
         try {
             const content = await readFile(join(this.DATADIR, file), 'utf-8');
-            return SourceListScheme.parse(JSON.parse(content)) as T;
+            return JSON.parse(content) as T;
         } catch {
             const content = await readFile(
                 join(this.BUNDLEDDIR, file),
                 'utf-8',
             );
-            return SourceListScheme.parse(JSON.parse(content)) as T;
+            return JSON.parse(content) as T;
         }
     }
 
@@ -83,20 +83,20 @@ export class FirmwareManager {
         try {
             return await this.loadFile<SourceList>('source.json');
         } catch (e) {
-            console.log(`couldnt find file, got error: ${e}`);
+            console.error(`couldn't find file, got error: ${e}`);
             return {
                 firmwares: [],
             };
         }
     }
 
-    private async loadReqList(): Promise<ReqList> {
+    public async loadReqList(): Promise<ReqList> {
         try {
             return await this.loadFile<ReqList>('requested.json');
         } catch (e) {
-            console.log(`couldnt find file, got error: ${e}`);
+            console.error(`Couldn't find file, got error: ${e}`);
             return {
-                firmwares: [],
+                apps: [],
             };
         }
     }
@@ -182,7 +182,10 @@ export class FirmwareManager {
     private async downloadFirmware(f: Firmware): Promise<string> {
         await this.Client.downloadArtifactFromUrl(f.file);
         await this.removeSource(f);
-        const path = f.file.split('/')[-1];
+        const path = f.file.split('/').pop()?.split('?')[0];
+        if (!path) {
+            throw new Error(`Could not derive a filename from url: ${f.file}`);
+        }
         await this.putSource({ ...f, file: path });
         return path;
     }

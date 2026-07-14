@@ -35,6 +35,7 @@ export {
 export {
     FirmwareManager,
     type Firmware,
+    type ReqFirmware,
     type ReqList,
 } from './artifactory/FirmwareManager';
 export { Testpane } from './artifactory/Testpane';

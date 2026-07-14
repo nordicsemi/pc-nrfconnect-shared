@@ -5,7 +5,7 @@
  */
 
 import { mkdir, writeFile } from 'fs/promises';
-import { dirname, resolve } from 'path';
+import { dirname, join, resolve } from 'path';
 import { z } from 'zod';
 
 export type AQueryProps = {
@@ -68,10 +68,17 @@ export class ArtifactoryClient {
     }
 
     public async downloadArtifactFromUrl(url: string): Promise<void> {
+        const filename = url.split('/').pop()?.split('?')[0];
+        if (!filename) {
+            throw new Error(`Could not derive a filename from url: ${url}`);
+        }
+
         const dir = resolve(this.DIR);
-        mkdir(dirname(dir), { recursive: true });
+        const target = join(dir, filename);
+
+        await mkdir(dir, { recursive: true }); // the folder we write INTO, and awaited
         const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
-        await writeFile(dir, buffer);
+        await writeFile(target, buffer);
     }
 
     public queryUrl(props: AQueryProps): string {
