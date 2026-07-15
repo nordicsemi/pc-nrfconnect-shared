@@ -9,8 +9,11 @@ import { handle, invoke } from './infrastructure/rendererToMain';
 const channel = {
     start: 'auth:start',
     logout: 'auth:logout',
+    singleSignOut: 'auth:single-sign-out',
+    checkLoginStatus: 'auth:check-login-status',
     getAccessToken: 'auth:get-access-token',
     getAccount: 'auth:get-account',
+    getProfileInfo: 'auth:get-profile-info',
 };
 
 export interface AccountInfo {
@@ -18,19 +21,25 @@ export interface AccountInfo {
     name?: string;
 }
 
+export interface ProfileInfo {
+    displayName?: string;
+    givenName?: string;
+    surname?: string;
+    mail?: string;
+}
+
 export type GenericAuthResult<T> =
     | { status: true; data: T }
     | { status: false; error: string };
 
-// export type LoginResult = { ok: true } | { ok: false; error: string };
-
 // The logical type is not wrapped in a promise. Invoke adds the promise itself.
-type StartLogin = () => GenericAuthResult<undefined>;
-type LocalLogout = () => GenericAuthResult<undefined>;
-type SingleSignOut = () => GenericAuthResult<undefined>;
+type StartLogin = () => GenericAuthResult<null>;
+type LocalLogout = () => GenericAuthResult<null>;
+type SingleSignOut = () => GenericAuthResult<null>;
 type CheckLoginStatus = () => GenericAuthResult<boolean>;
-type GetAccessToken = () => GenericAuthResult<string>;
+type GetAccessToken = (scopes?: string[]) => GenericAuthResult<string>;
 type GetAccountInfo = () => GenericAuthResult<AccountInfo>;
+type GetProfileInfo = () => GenericAuthResult<ProfileInfo>;
 
 const startLogin = invoke<StartLogin>(channel.start);
 const registerStartLogin = handle<StartLogin>(channel.start);
@@ -38,17 +47,22 @@ const registerStartLogin = handle<StartLogin>(channel.start);
 const localLogout = invoke<LocalLogout>(channel.logout);
 const registerLocalLogout = handle<LocalLogout>(channel.logout);
 
-const singleSignOut = invoke<SingleSignOut>(channel.logout);
-const registerSingleSignOut = handle<SingleSignOut>(channel.logout);
+const singleSignOut = invoke<SingleSignOut>(channel.singleSignOut);
+const registerSingleSignOut = handle<SingleSignOut>(channel.singleSignOut);
 
-const checkLoginStatus = invoke<CheckLoginStatus>(channel.start);
-const registerCheckLoginStatus = handle<CheckLoginStatus>(channel.start);
+const checkLoginStatus = invoke<CheckLoginStatus>(channel.checkLoginStatus);
+const registerCheckLoginStatus = handle<CheckLoginStatus>(
+    channel.checkLoginStatus,
+);
 
 const getAccessToken = invoke<GetAccessToken>(channel.getAccessToken);
 const registerGetAccessToken = handle<GetAccessToken>(channel.getAccessToken);
 
 const getAccountInfo = invoke<GetAccountInfo>(channel.getAccount);
 const registerGetAccountInfo = handle<GetAccountInfo>(channel.getAccount);
+
+const getProfileInfo = invoke<GetProfileInfo>(channel.getProfileInfo);
+const registerGetProfileInfo = handle<GetProfileInfo>(channel.getProfileInfo);
 
 export const forRenderer = {
     registerStartLogin,
@@ -57,6 +71,7 @@ export const forRenderer = {
     registerSingleSignOut,
     registerCheckLoginStatus,
     registerGetAccessToken,
+    registerGetProfileInfo,
 };
 export const inMain = {
     startLogin,
@@ -65,4 +80,5 @@ export const inMain = {
     singleSignOut,
     checkLoginStatus,
     getAccessToken,
+    getProfileInfo,
 };
