@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises';
+import { copyFile, mkdir, readFile, unlink, writeFile } from 'fs/promises';
 import { dirname, join, resolve } from 'path';
 import { z } from 'zod';
 
@@ -21,26 +21,38 @@ const FirmwareScheme = z.object({
 
 export type Firmware = z.infer<typeof FirmwareScheme>;
 
-export type ReqFirmware = Omit<Firmware, 'file' | 'version'> & {
-    documentation?: string | { label: string; href: string };
-};
-
-// List of all firmwares that need to be avaliable/downloaded
-export type ReqList = {
-    [sort: string]: {
-        title?: string;
-        description?: string;
-        documentation?: string | { label: string; href: string };
-        firmwares: ReqFirmware[];
-    }[];
-};
-
 const SourceListScheme = z.object({
     firmwares: z.array(FirmwareScheme),
 });
 
-// List of all avaliable firmwares
 export type SourceList = z.infer<typeof SourceListScheme>;
+
+const ReqFirmwareScheme = z.object({
+    name: z.string(),
+    type: z.string(),
+    device: z.string(),
+});
+
+export type ReqFirmware = z.infer<typeof ReqFirmwareScheme>;
+
+const ReqListScheme = z.record(
+    z.string(),
+    z.array(
+        z.object({
+            title: z.string().optional(),
+            description: z.string().optional(),
+            documentation: z
+                .union([
+                    z.string(),
+                    z.object({ label: z.string(), href: z.string() }),
+                ])
+                .optional(),
+            firmwares: z.array(ReqFirmwareScheme),
+        }),
+    ),
+);
+
+export type ReqList = z.infer<typeof ReqListScheme>;
 
 export class FirmwareManager {
     REPO: string;
@@ -66,24 +78,30 @@ export class FirmwareManager {
         );
     }
 
-    private async loadFile<T>(file: string): Promise<T> {
+    private async loadBundledSource(): Promise<SourceList> {
         try {
-            const content = await readFile(join(this.DATADIR, file), 'utf-8');
-            return JSON.parse(content) as T;
-        } catch {
             const content = await readFile(
-                join(this.BUNDLEDDIR, file),
+                join(this.BUNDLEDDIR, 'source.json'),
                 'utf-8',
             );
-            return JSON.parse(content) as T;
+            return SourceListScheme.parse(JSON.parse(content)) as SourceList;
+        } catch (e) {
+            console.error(`Error loading bundled source file, got error: ${e}`);
+            return {
+                firmwares: [],
+            };
         }
     }
 
-    private async loadSource(): Promise<SourceList> {
+    private async loadCachedSource(): Promise<SourceList> {
         try {
-            return await this.loadFile<SourceList>('source.json');
+            const content = await readFile(
+                join(this.DATADIR, 'source.json'),
+                'utf-8',
+            );
+            return SourceListScheme.parse(JSON.parse(content)) as SourceList;
         } catch (e) {
-            console.error(`couldn't find file, got error: ${e}`);
+            console.error(`Error loading cache source file, got error: ${e}`);
             return {
                 firmwares: [],
             };
@@ -92,9 +110,13 @@ export class FirmwareManager {
 
     public async loadReqList(): Promise<ReqList> {
         try {
-            return await this.loadFile<ReqList>('requested.json');
+            const content = await readFile(
+                join(this.BUNDLEDDIR, 'requested.json'),
+                'utf-8',
+            );
+            return ReqListScheme.parse(JSON.parse(content)) as ReqList;
         } catch (e) {
-            console.error(`Couldn't find file, got error: ${e}`);
+            console.error(`Error loading requested firmwares, got error: ${e}`);
             return {
                 apps: [],
             };
@@ -122,15 +144,42 @@ export class FirmwareManager {
     }
 
     private async putSource(fw: Firmware): Promise<void> {
-        const source = await this.loadSource();
+        const source = await this.loadCachedSource();
         source.firmwares.push(fw);
         await this.saveSource(source);
     }
 
+    private async loadBundledFirmware(
+        fw: ReqFirmware,
+        upsteamFw: Firmware,
+    ): Promise<string> {
+        const bundledSource = await this.loadBundledSource();
+        const bundledFirmware = bundledSource.firmwares.find(
+            f =>
+                f.name === fw.name &&
+                f.device === fw.device &&
+                f.type === fw.type,
+        );
+
+        if (
+            typeof bundledFirmware === 'undefined' ||
+            bundledFirmware.version !== upsteamFw.version
+        ) {
+            return await this.downloadFirmware(upsteamFw);
+        }
+
+        copyFile(
+            join(this.BUNDLEDDIR, bundledFirmware.file),
+            join(this.DATADIR, 'firmware', bundledFirmware.file),
+        );
+        this.putSource(bundledFirmware);
+        return bundledFirmware.file;
+    }
+
     // Returns filename for requested firmware within the directory specified in constructor
     public async getFile(fw: ReqFirmware): Promise<string> {
-        const source = await this.loadSource();
-        const localFirmware = source.firmwares.find(
+        const cachedSource = await this.loadCachedSource();
+        const cachedFirmware = cachedSource.firmwares.find(
             f =>
                 f.name === fw.name &&
                 f.device === fw.device &&
@@ -139,18 +188,19 @@ export class FirmwareManager {
 
         const upstreamFirmware = await this.fetchFirmware(fw);
 
-        if (
-            typeof localFirmware !== 'undefined' &&
-            upstreamFirmware.version === localFirmware.version
-        ) {
-            return localFirmware.file;
+        if (typeof cachedFirmware === 'undefined') {
+            return await this.loadBundledFirmware(fw, upstreamFirmware);
+        }
+
+        if (upstreamFirmware.version === cachedFirmware.version) {
+            return cachedFirmware.file;
         }
 
         return await this.downloadFirmware(upstreamFirmware);
     }
 
     private async removeSource(fw: ReqFirmware): Promise<void> {
-        const source = await this.loadSource();
+        const source = await this.loadCachedSource();
 
         const toRemove = source.firmwares.filter(
             f =>
