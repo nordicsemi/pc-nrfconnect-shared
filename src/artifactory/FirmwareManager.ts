@@ -9,7 +9,11 @@ import { dirname, join, resolve } from 'path';
 import { z } from 'zod';
 
 import { getAppDataDir, getAppDir } from '../utils/appDirs';
-import { ArtifactoryClient } from './ArtifactoryClient';
+import {
+    type AQueryProps,
+    type AResponse,
+    ArtifactoryClient,
+} from './ArtifactoryClient';
 
 const FirmwareScheme = z.object({
     name: z.string(),
@@ -17,6 +21,7 @@ const FirmwareScheme = z.object({
     type: z.string(),
     device: z.string(),
     version: z.string(),
+    latest: z.string().optional(),
 });
 
 export type Firmware = z.infer<typeof FirmwareScheme>;
@@ -60,12 +65,14 @@ export class FirmwareManager {
     BUNDLEDDIR: string;
     DATADIR: string;
     Client: ArtifactoryClient;
+    CACHE: boolean;
 
     constructor(
         dataDirectory: string = getAppDataDir(),
         bundledDirectory: string = join(getAppDir(), 'resources', 'firmware'),
         server: string = 'files.nordicsemi.com',
         repo: string = 'swtools',
+        cache: boolean = true,
     ) {
         this.SERVER = server;
         this.REPO = repo;
@@ -76,6 +83,7 @@ export class FirmwareManager {
             this.REPO,
             join(this.DATADIR, 'firmware'),
         );
+        this.CACHE = cache;
     }
 
     private async loadBundledSource(): Promise<SourceList> {
@@ -151,21 +159,26 @@ export class FirmwareManager {
 
     private async loadBundledFirmware(
         fw: ReqFirmware,
-        upsteamFw: Firmware,
+        upstreamFirmware: Firmware,
+        version?: string,
     ): Promise<string> {
         const bundledSource = await this.loadBundledSource();
         const bundledFirmware = bundledSource.firmwares.find(
             f =>
                 f.name === fw.name &&
                 f.device === fw.device &&
-                f.type === fw.type,
+                f.type === fw.type &&
+                (version === undefined || f.version === version),
         );
 
         if (
             typeof bundledFirmware === 'undefined' ||
-            bundledFirmware.version !== upsteamFw.version
+            bundledFirmware.version !== upstreamFirmware.version
         ) {
-            return await this.downloadFirmware(upsteamFw);
+            console.log(
+                `Downloading firmware ${upstreamFirmware.name} from artifactory`,
+            );
+            return await this.downloadFirmware(upstreamFirmware);
         }
 
         copyFile(
@@ -173,40 +186,66 @@ export class FirmwareManager {
             join(this.DATADIR, 'firmware', bundledFirmware.file),
         );
         this.putSource(bundledFirmware);
+        console.log(`Copying firmware ${bundledFirmware.name} from bundle`);
         return bundledFirmware.file;
     }
 
     // Returns filename for requested firmware within the directory specified in constructor
-    public async getFile(fw: ReqFirmware): Promise<string> {
+    public async getFile(fw: ReqFirmware, version?: string): Promise<string> {
         const cachedSource = await this.loadCachedSource();
-        const cachedFirmware = cachedSource.firmwares.find(
-            f =>
-                f.name === fw.name &&
-                f.device === fw.device &&
-                f.type === fw.type,
-        );
-
-        const upstreamFirmware = await this.fetchFirmware(fw);
-
-        if (typeof cachedFirmware === 'undefined') {
-            return await this.loadBundledFirmware(fw, upstreamFirmware);
+        let cachedFirmware;
+        if (this.CACHE) {
+            cachedFirmware = cachedSource.firmwares.find(
+                f =>
+                    f.name === fw.name &&
+                    f.device === fw.device &&
+                    f.type === fw.type &&
+                    (version === undefined || f.version === version),
+            );
+        } else {
+            cachedSource.firmwares.forEach(f => this.removeSource(f));
         }
 
+        const upstreamFirmware = await this.fetchFirmware(fw, version);
+
+        if (cachedFirmware === undefined) {
+            return await this.loadBundledFirmware(
+                fw,
+                upstreamFirmware,
+                version,
+            );
+        }
+
+        console.log(cachedFirmware.version);
+        console.log(upstreamFirmware.version);
+
         if (upstreamFirmware.version === cachedFirmware.version) {
+            console.log(`Returning firmware ${cachedFirmware.name} from cache`);
             return cachedFirmware.file;
         }
 
+        console.log(
+            `Downloading firmware ${upstreamFirmware.name} from artifactory`,
+        );
         return await this.downloadFirmware(upstreamFirmware);
     }
 
-    private async removeSource(fw: ReqFirmware): Promise<void> {
+    public async searchFirmware(fw: Partial<Firmware>): Promise<AResponse> {
+        return await this.Client.searchArtifactory(fw);
+    }
+
+    public async removeSource(
+        fw: ReqFirmware,
+        version?: string,
+    ): Promise<void> {
         const source = await this.loadCachedSource();
 
         const toRemove = source.firmwares.filter(
             f =>
                 f.name === fw.name &&
                 f.device === fw.device &&
-                f.type === fw.type,
+                f.type === fw.type &&
+                (version === undefined || f.version === version),
         );
 
         await Promise.all(
@@ -222,7 +261,8 @@ export class FirmwareManager {
                 !(
                     f.name === fw.name &&
                     f.device === fw.device &&
-                    f.type === fw.type
+                    f.type === fw.type &&
+                    (version === undefined || f.version === version)
                 ),
         );
 
@@ -240,13 +280,23 @@ export class FirmwareManager {
         return path;
     }
 
-    private async fetchFirmware(fw: ReqFirmware): Promise<Firmware> {
-        const res = await this.Client.searchArtifactory({
+    private async fetchFirmware(
+        fw: ReqFirmware,
+        v?: string,
+    ): Promise<Firmware> {
+        let props: AQueryProps = {
             type: fw.type,
             name: fw.name,
             device: fw.device,
-            latest: 'true',
-        });
+        };
+
+        if (v) {
+            props = { version: v, ...props };
+        } else {
+            props = { latest: 'true', ...props };
+        }
+
+        const res = await this.Client.searchArtifactory(props);
 
         if (res.length !== 1) {
             throw new Error('Unexpected artifactory search return');
