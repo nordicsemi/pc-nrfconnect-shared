@@ -87,7 +87,6 @@ export { default as telemetry } from './telemetry/telemetry';
 export { type default as TelemetryMetadata } from './telemetry/TelemetryMetadata';
 export { default as classNames } from './utils/classNames';
 export { truncateMiddle } from './utils/truncateMiddle';
-export { removeAnsi } from './utils/stringHelpers';
 
 export { default as useHotKey } from './utils/useHotKey';
 export { isDevelopment } from './utils/environment';

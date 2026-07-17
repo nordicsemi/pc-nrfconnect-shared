@@ -7,6 +7,16 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
+## 255.0.0 - 2026-07-17
+
+### Fixed
+
+- Running Jest was broken with shared 254.
+
+### Removed
+
+- `removeAnsi` string helper because of a problematic library.
+
 ## 254.0.0 - 2026-07-08
 
 ### Added
