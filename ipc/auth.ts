@@ -11,6 +11,7 @@ const channel = {
     logout: 'auth:logout',
     singleSignOut: 'auth:single-sign-out',
     checkLoginStatus: 'auth:check-login-status',
+    getIdToken: 'auth:get-id-token',
     getAccessToken: 'auth:get-access-token',
     getAccount: 'auth:get-account',
     getProfileInfo: 'auth:get-profile-info',
@@ -38,6 +39,7 @@ type LocalLogout = () => GenericAuthResult<null>;
 type SingleSignOut = () => GenericAuthResult<null>;
 type CheckLoginStatus = () => GenericAuthResult<boolean>;
 type GetAccessToken = (scopes?: string[]) => GenericAuthResult<string>;
+type GetIdToken = () => GenericAuthResult<string>;
 type GetAccountInfo = () => GenericAuthResult<AccountInfo>;
 type GetProfileInfo = () => GenericAuthResult<ProfileInfo>;
 
@@ -55,6 +57,8 @@ const registerCheckLoginStatus = handle<CheckLoginStatus>(
     channel.checkLoginStatus,
 );
 
+const getIdToken = invoke<GetIdToken>(channel.getIdToken);
+const registerGetIdToken = handle<GetIdToken>(channel.getIdToken);
 const getAccessToken = invoke<GetAccessToken>(channel.getAccessToken);
 const registerGetAccessToken = handle<GetAccessToken>(channel.getAccessToken);
 
@@ -70,6 +74,7 @@ export const forRenderer = {
     registerLocalLogout,
     registerSingleSignOut,
     registerCheckLoginStatus,
+    registerGetIdToken,
     registerGetAccessToken,
     registerGetProfileInfo,
 };
@@ -80,5 +85,6 @@ export const inMain = {
     singleSignOut,
     checkLoginStatus,
     getAccessToken,
+    getIdToken,
     getProfileInfo,
 };
