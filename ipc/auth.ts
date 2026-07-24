@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
+import { type WebContents } from 'electron';
+
+import { broadcast, onBroadcasted } from './infrastructure/mainToRenderer';
 import { handle, invoke } from './infrastructure/rendererToMain';
 
 const channel = {
@@ -15,7 +18,22 @@ const channel = {
     getAccessToken: 'auth:get-access-token',
     getAccount: 'auth:get-account',
     getProfileInfo: 'auth:get-profile-info',
+    onStateChanged: 'auth:on-state-changed',
 };
+
+const AUTH_STATE_SUBCHANNEL = 'auth-state';
+
+export type AuthStatus =
+    | 'signedIn'
+    | 'signedOut'
+    | 'signingIn'
+    | 'signingOut'
+    | 'interactionRequired';
+
+export interface AuthState {
+    status: AuthStatus;
+    message?: string;
+}
 
 export interface AccountInfo {
     username: string;
@@ -34,14 +52,28 @@ export type GenericAuthResult<T> =
     | { status: false; error: string };
 
 // The logical type is not wrapped in a promise. Invoke adds the promise itself.
+type OnStateChanged = (state: AuthState) => void;
 type StartLogin = () => GenericAuthResult<null>;
 type LocalLogout = () => GenericAuthResult<null>;
 type SingleSignOut = () => GenericAuthResult<null>;
-type CheckLoginStatus = () => GenericAuthResult<boolean>;
 type GetAccessToken = (scopes?: string[]) => GenericAuthResult<string>;
-type GetIdToken = () => GenericAuthResult<string>;
+type GetIdToken = (scopes?: string[]) => GenericAuthResult<string>;
 type GetAccountInfo = () => GenericAuthResult<AccountInfo>;
 type GetProfileInfo = () => GenericAuthResult<ProfileInfo>;
+
+// main to renderers
+const broadcastStateChangedRaw = broadcast<OnStateChanged>(
+    channel.onStateChanged,
+);
+const broadcastStateChanged = (
+    targets: Pick<WebContents, 'send'>[],
+    state: AuthState,
+) => broadcastStateChangedRaw(AUTH_STATE_SUBCHANNEL, targets, state);
+
+const registerOnStateChanged = onBroadcasted<OnStateChanged>(
+    channel.onStateChanged,
+    AUTH_STATE_SUBCHANNEL,
+);
 
 const startLogin = invoke<StartLogin>(channel.start);
 const registerStartLogin = handle<StartLogin>(channel.start);
@@ -51,11 +83,6 @@ const registerLocalLogout = handle<LocalLogout>(channel.logout);
 
 const singleSignOut = invoke<SingleSignOut>(channel.singleSignOut);
 const registerSingleSignOut = handle<SingleSignOut>(channel.singleSignOut);
-
-const checkLoginStatus = invoke<CheckLoginStatus>(channel.checkLoginStatus);
-const registerCheckLoginStatus = handle<CheckLoginStatus>(
-    channel.checkLoginStatus,
-);
 
 const getIdToken = invoke<GetIdToken>(channel.getIdToken);
 const registerGetIdToken = handle<GetIdToken>(channel.getIdToken);
@@ -73,18 +100,19 @@ export const forRenderer = {
     registerGetAccountInfo,
     registerLocalLogout,
     registerSingleSignOut,
-    registerCheckLoginStatus,
     registerGetIdToken,
     registerGetAccessToken,
     registerGetProfileInfo,
+    registerOnStateChanged,
+    broadcastStateChanged,
 };
 export const inMain = {
     startLogin,
     getAccountInfo,
     localLogout,
     singleSignOut,
-    checkLoginStatus,
     getAccessToken,
     getIdToken,
     getProfileInfo,
+    registerOnStateChanged,
 };
