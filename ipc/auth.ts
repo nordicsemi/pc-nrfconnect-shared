@@ -11,7 +11,6 @@ import { handle, invoke } from './infrastructure/rendererToMain';
 
 const channel = {
     start: 'auth:start',
-    logout: 'auth:logout',
     singleSignOut: 'auth:single-sign-out',
     checkLoginStatus: 'auth:check-login-status',
     getIdToken: 'auth:get-id-token',
@@ -54,7 +53,6 @@ export type GenericAuthResult<T> =
 // The logical type is not wrapped in a promise. Invoke adds the promise itself.
 type OnStateChanged = (state: AuthState) => void;
 type StartLogin = () => GenericAuthResult<null>;
-type LocalLogout = () => GenericAuthResult<null>;
 type SingleSignOut = () => GenericAuthResult<null>;
 type GetAccessToken = (scopes?: string[]) => GenericAuthResult<string>;
 type GetIdToken = (scopes?: string[]) => GenericAuthResult<string>;
@@ -78,9 +76,6 @@ const registerOnStateChanged = onBroadcasted<OnStateChanged>(
 const startLogin = invoke<StartLogin>(channel.start);
 const registerStartLogin = handle<StartLogin>(channel.start);
 
-const localLogout = invoke<LocalLogout>(channel.logout);
-const registerLocalLogout = handle<LocalLogout>(channel.logout);
-
 const singleSignOut = invoke<SingleSignOut>(channel.singleSignOut);
 const registerSingleSignOut = handle<SingleSignOut>(channel.singleSignOut);
 
@@ -98,7 +93,6 @@ const registerGetProfileInfo = handle<GetProfileInfo>(channel.getProfileInfo);
 export const forRenderer = {
     registerStartLogin,
     registerGetAccountInfo,
-    registerLocalLogout,
     registerSingleSignOut,
     registerGetIdToken,
     registerGetAccessToken,
@@ -109,7 +103,6 @@ export const forRenderer = {
 export const inMain = {
     startLogin,
     getAccountInfo,
-    localLogout,
     singleSignOut,
     getAccessToken,
     getIdToken,
