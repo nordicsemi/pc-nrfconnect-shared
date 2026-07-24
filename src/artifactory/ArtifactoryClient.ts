@@ -46,9 +46,9 @@ const AResponseScheme = z.array(
 export type AResponse = z.infer<typeof AResponseScheme>;
 
 export class ArtifactoryClient {
-    SERVER: string;
-    REPO: string;
-    DIR: string;
+    protected SERVER: string;
+    protected REPO: string;
+    protected DIR: string;
 
     constructor(server: string, repo: string, dir: string) {
         this.SERVER = server;

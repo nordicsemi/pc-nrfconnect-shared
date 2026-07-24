@@ -32,12 +32,8 @@ export {
     ArtifactoryClient,
     type AResponse,
 } from './artifactory/ArtifactoryClient';
-export {
-    FirmwareManager,
-    type Firmware,
-    type ReqFirmware,
-    type ReqList,
-} from './artifactory/FirmwareManager';
+export { FirmwareManager } from './artifactory/FirmwareManager';
+export { FirmwareClient } from './artifactory/FirmwareClient';
 export { Testpane } from './artifactory/Testpane';
 
 export { Toggle } from './Toggle/Toggle';
