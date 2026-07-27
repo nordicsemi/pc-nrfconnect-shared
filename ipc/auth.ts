@@ -33,6 +33,7 @@ export type AuthStatus =
 export interface AuthState {
     status: AuthStatus;
     message?: string;
+    account?: AccountInfo;
 }
 
 export interface AccountInfo {
