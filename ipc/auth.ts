@@ -17,6 +17,7 @@ const channel = {
     getAccessToken: 'auth:get-access-token',
     getAccount: 'auth:get-account',
     getProfileInfo: 'auth:get-profile-info',
+    getStatus: 'auth:get-status',
     onStateChanged: 'auth:on-state-changed',
 };
 
@@ -51,6 +52,7 @@ export type GenericAuthResult<T> =
     | { status: false; error: string };
 
 // The logical type is not wrapped in a promise. Invoke adds the promise itself.
+type GetAuthStatus = () => AuthState;
 type OnStateChanged = (state: AuthState) => void;
 type StartLogin = () => GenericAuthResult<null>;
 type SingleSignOut = () => GenericAuthResult<null>;
@@ -72,6 +74,9 @@ const registerOnStateChanged = onBroadcasted<OnStateChanged>(
     channel.onStateChanged,
     AUTH_STATE_SUBCHANNEL,
 );
+
+const getAuthStatus = invoke<GetAuthStatus>(channel.getStatus);
+const registerGetAuthStatus = handle<GetAuthStatus>(channel.getStatus);
 
 const startLogin = invoke<StartLogin>(channel.start);
 const registerStartLogin = handle<StartLogin>(channel.start);
@@ -97,6 +102,7 @@ export const forRenderer = {
     registerGetIdToken,
     registerGetAccessToken,
     registerGetProfileInfo,
+    registerGetAuthStatus,
     registerOnStateChanged,
     broadcastStateChanged,
 };
@@ -108,4 +114,5 @@ export const inMain = {
     getIdToken,
     getProfileInfo,
     registerOnStateChanged,
+    getAuthStatus,
 };
