@@ -1,0 +1,76 @@
+name: Fix eslint
+
+# Manually fix eslint/prettier issues on a branch without pulling locally.
+# Useful after editing Changelog, docs or other text directly on GitHub, which
+# often breaks eslint+prettier. Select the branch to fix via the native
+# "Run workflow" branch picker. Protected branches are rejected at runtime.
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+    fix-lint:
+        runs-on: ubuntu-latest
+        env:
+            GH_TOKEN: ${{ github.token }}
+            BRANCH: ${{ github.ref_name }}
+        steps:
+            - name: Reject protected branches
+              run: |
+                  protected=$(gh api "repos/${{ github.repository }}/branches/${BRANCH}" --jq '.protected')
+                  if [ "$protected" = "true" ]; then
+                      echo "::error::Branch '${BRANCH}' is protected and cannot be pushed to by this workflow."
+                      exit 1
+                  fi
+                  echo "Branch '${BRANCH}' is not protected. Proceeding."
+
+            - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+              with:
+                  ref: ${{ github.ref_name }}
+
+            - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+              with:
+                  node-version: 24 # updated to 24
+                  cache: 'npm'
+
+            - name: Install dependencies
+              env:
+                  GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+              run: |
+                  if [ -n "$GH_PACKAGES_TOKEN" ]; then
+                      cleanup() {
+                          npm config delete "//npm.pkg.github.com/:_authToken" --location=user || true
+                      }
+                      trap cleanup EXIT
+                      npm config set "//npm.pkg.github.com/:_authToken=$GH_PACKAGES_TOKEN" --location=user
+                  fi
+
+                  npm ci
+
+            - name: Fix lint
+              continue-on-error: true
+              run: npm run check:lint -- --fix
+
+            - name: Commit and push fixes
+              run: |
+                  if [ -z "$(git status --porcelain)" ]; then
+                      echo "::notice::No lint changes to push."
+                      echo "### ℹ️ No lint changes to push on \`${BRANCH}\`" >> "$GITHUB_STEP_SUMMARY"
+                      exit 0
+                  fi
+
+                  git config user.name '${{ github.actor }}'
+                  git config user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
+                  git add -A
+                  git commit -m 'style: fix eslint/prettier issues'
+                  git push origin "HEAD:${BRANCH}"
+
+                  sha=$(git rev-parse HEAD)
+                  short_sha=$(git rev-parse --short HEAD)
+                  commit_url="${{ github.server_url }}/${{ github.repository }}/commit/${sha}"
+
+                  echo "::notice::Pushed lint fixes to ${BRANCH} in commit ${short_sha}."
+                  echo "### ✅ Pushed lint fixes in commit [${short_sha}](${commit_url}) to \`${BRANCH}\`" >> "$GITHUB_STEP_SUMMARY"
