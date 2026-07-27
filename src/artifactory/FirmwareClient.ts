@@ -5,7 +5,7 @@
  */
 
 import { mkdir, readFile, unlink, writeFile } from 'fs/promises';
-import { dirname, join, resolve } from 'path';
+import { join, resolve } from 'path';
 import { z } from 'zod';
 
 import { getAppDataDir } from '../utils/appDirs';
@@ -13,6 +13,7 @@ import {
     type AQueryProps,
     type AResponse,
     ArtifactoryClient,
+    filenameFromUrl,
 } from './ArtifactoryClient';
 
 export const TypeScheme = z.union([
@@ -23,33 +24,26 @@ export const TypeScheme = z.union([
 
 export const FirmwareScheme = z.object({
     name: z.string(), // Identifier associated with functionality (not version or device)
-    version: z.string(),
+    version: z.string().optional(), // Not optional for source / cache
     type: TypeScheme, // Max one of each per flash (cant have two Modems on one device at a time)
     device: z.array(z.string()), // Some firmwares support multiple devices (this should be called devices)
-    file: z.string(), // Absolute path
+    file: z.string().optional(), // Absolute path or download url
+    latest: z.string().optional(),
 });
 
-export const NetworkScheme = FirmwareScheme.extend({
-    version: z.string().optional(), // version being undefined assumes latest is requested
-    file: z.string().optional(), // Download url if applicable
-});
-
-export const ArtifactScheme = NetworkScheme.extend({
+export const ArtifactScheme = FirmwareScheme.extend({
     title: z.string().optional(),
     description: z.string().optional(),
     documentation: z
         .union([z.string(), z.object({ label: z.string(), href: z.string() })])
         .optional(),
-    dependencies: z.array(NetworkScheme).optional(),
+    dependencies: z.array(FirmwareScheme).optional(),
 });
 
-export type Firmware = z.infer<typeof FirmwareScheme>;
-export type NetworkFirmware = z.infer<typeof NetworkScheme>;
 export type Artifact = z.infer<typeof ArtifactScheme>;
 
 export class FirmwareClient extends ArtifactoryClient {
     protected DATADIR: string;
-    protected CACHE: boolean = false;
 
     constructor(
         server: string = 'files.nordicsemi.com',
@@ -61,8 +55,8 @@ export class FirmwareClient extends ArtifactoryClient {
         this.DATADIR = dir;
     }
 
-    protected async saveSource(source: Firmware[]): Promise<void> {
-        await mkdir(dirname(this.DATADIR), { recursive: true });
+    protected async saveSource(source: Artifact[]): Promise<void> {
+        await mkdir(this.DATADIR, { recursive: true });
         await writeFile(
             join(this.DATADIR, 'source.json'),
             JSON.stringify(source, null, 2),
@@ -70,7 +64,7 @@ export class FirmwareClient extends ArtifactoryClient {
         );
     }
 
-    protected async loadCachedSource(): Promise<Firmware[]> {
+    public async loadSource(): Promise<Artifact[]> {
         try {
             const content = await readFile(
                 join(this.DATADIR, 'source.json'),
@@ -78,55 +72,50 @@ export class FirmwareClient extends ArtifactoryClient {
             );
             return z
                 .array(FirmwareScheme)
-                .parse(JSON.parse(content)) as Firmware[];
+                .parse(JSON.parse(content)) as Artifact[];
         } catch (e) {
             console.error(`Error loading cache source file, got error: ${e}`);
             return [];
         }
     }
 
-    protected async putSource(fw: Firmware): Promise<void> {
-        const source = await this.loadCachedSource();
+    protected async putSource(fw: Artifact): Promise<void> {
+        if (fw.version === undefined) {
+            throw new Error('sourced artifact needs version');
+        }
+        const source = await this.loadSource();
         source.push(fw);
         await this.saveSource(source);
     }
 
-    public async searchFirmware(fw: NetworkFirmware): Promise<AResponse> {
-        if (fw.device === undefined) {
-            return await this.searchArtifactory({
-                ...fw,
-                device: '',
-            });
-        }
+    protected async searchFirmware(
+        fw: Artifact,
+        allVersions?: boolean,
+    ): Promise<AResponse> {
+        const diffProps: AQueryProps[] = fw.device.map(d =>
+            mapToQueryProps({ ...fw, device: [d] }, allVersions),
+        );
 
-        const deviceSearches: AResponse[] = [];
-        fw.device.forEach(async d => {
-            deviceSearches.push(
-                await this.searchArtifactory({
-                    ...fw,
-                    device: d,
-                }),
-            );
-        });
+        const deviceSearches: AResponse[] = await Promise.all(
+            diffProps.map(props => this.searchArtifactory(props)),
+        );
 
-        return deviceSearches.flatMap(i => i);
+        const out: AResponse = [];
+        deviceSearches.forEach(results =>
+            results.forEach(item => {
+                if (!out.map(f => f.path).includes(item.path)) {
+                    out.push(item);
+                }
+            }),
+        );
+
+        return out;
     }
 
-    public async getFile(fw: NetworkFirmware): Promise<Firmware> {
-        const cachedSource = await this.loadCachedSource();
-        let cachedFirmware;
+    public async getFirmware(fw: Artifact): Promise<Artifact> {
+        const cachedSource = await this.loadSource();
 
-        if (this.CACHE) {
-            cachedFirmware = cachedSource.find(
-                f =>
-                    f.name === fw.name &&
-                    f.device === fw.device &&
-                    f.type === fw.type &&
-                    (fw.version === undefined || f.version === fw.version),
-            );
-        } else {
-            cachedSource.forEach(f => this.removeSource(f));
-        }
+        const cachedFirmware = cachedSource.find(f => isSameArtifact(f, fw));
 
         const upstreamFirmware = await this.fetchFirmware(fw);
 
@@ -150,48 +139,53 @@ export class FirmwareClient extends ArtifactoryClient {
         return await this.downloadFirmware(upstreamFirmware);
     }
 
-    public async removeSource(fw: Artifact): Promise<void> {
-        let source = await this.loadCachedSource();
+    public async deleteFirmware(fw: Artifact): Promise<void> {
+        let source = await this.loadSource();
 
-        const toRemove = source.filter(
-            f =>
-                f.name === fw.name &&
-                f.device === fw.device &&
-                f.type === fw.type &&
-                (fw.version === undefined || f.version === fw.version),
-        );
+        const toRemove = source.filter(f => isSameArtifact(f, fw));
 
         await Promise.all(
-            toRemove.map(f =>
-                unlink(f.file).catch(err => {
+            toRemove.map(async f => {
+                if (f.file === undefined) {
+                    console.error(
+                        `Failed to delete firmware ${f}: no file specified in source`,
+                    );
+                    return;
+                }
+                await unlink(f.file).catch(err => {
                     console.warn(`Failed to delete file ${f.file}:`, err);
-                }),
-            ),
+                });
+            }),
         );
 
-        source = source.filter(
-            f =>
-                !(
-                    f.name === fw.name &&
-                    f.device === fw.device &&
-                    f.type === fw.type &&
-                    (fw.version === undefined || f.version === fw.version)
-                ),
-        );
+        source = source.filter(f => isSameArtifact(f, fw));
 
         await this.saveSource(source);
     }
 
-    public async searchVersions(fw: NetworkFirmware): Promise<string[]> {
-        const alternatives = await this.searchFirmware(fw);
+    public async clearCache(): Promise<void> {
+        const source = await this.loadSource();
+        await Promise.all(
+            source.map(f =>
+                f.file ? unlink(f.file).catch(() => {}) : undefined,
+            ),
+        );
+        await this.saveSource([]);
+    }
+
+    public async searchVersions(fw: Artifact): Promise<string[]> {
+        const alternatives = await this.searchFirmware(fw, true);
 
         return alternatives.map(f => f.properties.version[0]);
     }
 
-    protected async downloadFirmware(f: NetworkFirmware): Promise<Firmware> {
+    protected async downloadFirmware(f: Artifact): Promise<Artifact> {
         if (!f.file) {
-            throw new Error('NetworkFirmware did not contain url');
+            throw new Error(
+                'NetworkFirmware should contain download path at this point',
+            );
         }
+
         if (!f.version) {
             throw new Error(
                 'NetworkFirmware should contain version at this point',
@@ -199,15 +193,11 @@ export class FirmwareClient extends ArtifactoryClient {
         }
 
         await this.downloadArtifactFromUrl(f.file);
-        await this.removeSource(f);
-        const path = f.file.split('/').pop()?.split('?')[0];
-        if (!path) {
-            throw new Error(`Could not derive a filename from url: ${f.file}`);
-        }
+        const path = filenameFromUrl(f.file);
 
-        const outFirmware: Firmware = {
+        const outFirmware: Artifact = {
             ...f,
-            file: this.absolutePath(path),
+            file: join(this.DIR, path),
             version: f.version,
         };
 
@@ -216,64 +206,55 @@ export class FirmwareClient extends ArtifactoryClient {
         return outFirmware;
     }
 
-    protected absolutePath(path: string): string {
-        return join(this.DATADIR, 'firmware', path);
-    }
-
-    protected fetchApplication(fw: Artifact): NetworkFirmware[] {
+    protected async fetchApplication(fw: Artifact): Promise<Artifact[]> {
         const ins: Artifact[] = [fw];
-
-        const out: NetworkFirmware[] = [];
 
         if (fw.dependencies) {
             fw.dependencies.forEach(f => ins.push(f));
         }
 
-        ins.forEach(async f => {
-            out.push(await this.fetchFirmware(f));
-        });
+        const out: Artifact[] = await Promise.all(
+            ins.map(f => this.fetchFirmware(f)),
+        );
 
         return out;
     }
 
     protected async fetchFirmware(fw: Artifact): Promise<Artifact> {
-        let props: AQueryProps = {
-            name: fw.name,
-            device: fw.device[0],
-        };
+        const res = await this.searchArtifactory(mapToQueryProps(fw));
 
-        if (fw.type) {
-            props = { type: fw.type, ...props };
+        if (res.length === 0) {
+            throw new Error(`No artifact found for ${fw.name} (${fw.type})`);
+        }
+        if (res.length > 1) {
+            console.error(`Multiple matches for ${fw}, trying first`);
         }
 
-        if (fw.version) {
-            props = { version: fw.version, ...props };
-        } else {
-            props = { latest: 'true', ...props };
-        }
+        return await this.mapToArtifact(res);
+    }
 
-        const res = await this.searchArtifactory(props);
-
+    protected async mapToArtifact(res: AResponse): Promise<Artifact> {
         if (res.length !== 1) {
-            throw new Error('Unexpected artifactory search return');
+            throw new Error('Expect one artifact at a time');
         }
+        const r = res[0];
 
         let outFirmware: Artifact = {
-            name: res[0].properties.name[0],
-            type: TypeScheme.parse(res[0].properties.type[0]),
-            version: res[0].properties.version[0],
-            device: res[0].properties.device,
-            file: this.downloadUrl(res[0].path),
+            name: r.properties.name[0],
+            type: TypeScheme.parse(r.properties.type[0]),
+            version: r.properties.version[0],
+            device: r.properties.device,
+            file: this.downloadUrl(r.path),
         };
 
-        if (res[0].properties.dependencyfile) {
+        if (r.properties.dependencyfile[0]) {
             let depprops: AQueryProps = {
-                name: res[0].properties.dependencyfile[0],
+                name: r.properties.dependencyfile[0],
                 type: 'Dependency',
             };
 
-            if (fw.version) {
-                depprops = { version: fw.version, ...depprops };
+            if (outFirmware.version) {
+                depprops = { version: outFirmware.version, ...depprops };
             } else {
                 depprops = { latest: 'true', ...depprops };
             }
@@ -283,12 +264,36 @@ export class FirmwareClient extends ArtifactoryClient {
             const url = this.downloadUrl(depsearch[0].path);
 
             const depfile = z
-                .array(NetworkScheme)
+                .array(FirmwareScheme)
                 .parse(await this.downloadArtifactFromUrl(url));
 
             outFirmware = { ...outFirmware, dependencies: depfile };
         }
-
         return outFirmware;
     }
+}
+
+function mapToQueryProps(fw: Artifact, allVersions?: boolean): AQueryProps {
+    const props: AQueryProps = {
+        name: fw.name,
+        device: fw.device[0],
+        type: fw.type,
+    };
+
+    if (allVersions) return props;
+    if (fw.version) props.version = fw.version;
+    else props.latest = 'true';
+
+    return props;
+}
+
+function isSameArtifact(i: Artifact, j: Artifact): boolean {
+    return (
+        i.name === j.name &&
+        i.device.every(d => j.device.includes(d)) &&
+        i.type === j.type &&
+        (i.version === j.version ||
+            j.version === undefined ||
+            i.version === undefined)
+    );
 }

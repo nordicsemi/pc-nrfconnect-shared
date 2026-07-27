@@ -60,7 +60,12 @@ export class ArtifactoryClient {
         `https://${this.SERVER}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${this.REPO}&path=${path}`;
 
     public async downloadArtifact(path: string): Promise<void> {
-        const dir = resolve(`${this.DIR}${path.split('/')[-1]}`);
+        const pathByPieces = path.split('/');
+
+        const dir = resolve(
+            join(this.DIR, pathByPieces[pathByPieces.length - 1]),
+        );
+
         mkdir(dirname(dir), { recursive: true });
         const url: string = this.downloadUrl(path);
         const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
@@ -68,10 +73,7 @@ export class ArtifactoryClient {
     }
 
     public async downloadArtifactFromUrl(url: string): Promise<void> {
-        const filename = url.split('/').pop()?.split('?')[0];
-        if (!filename) {
-            throw new Error(`Could not derive a filename from url: ${url}`);
-        }
+        const filename = filenameFromUrl(url);
 
         const dir = resolve(this.DIR);
         const target = join(dir, filename);
@@ -82,19 +84,16 @@ export class ArtifactoryClient {
     }
 
     public queryUrl(props: AQueryProps): string {
-        const parts: string[] = [];
-        parts.push(
-            `https://${this.SERVER}/artifactory/api/search/prop?repos=${this.REPO}&main_download=true`,
-        );
-
-        Object.entries(props).forEach(([key, value]) => {
-            if (key !== 'repo' && key !== 'server') {
-                parts.push(`&${key}=${String(value)}`);
-            }
+        const params = new URLSearchParams({
+            repos: this.REPO,
+            main_download: 'true',
         });
 
-        console.log(parts);
-        return parts.join('');
+        Object.entries(props).forEach(([k, v]) => {
+            if (k !== 'repo' && k !== 'server') params.set(k, v);
+        });
+
+        return `https://${this.SERVER}/artifactory/api/search/prop?${params}`;
     }
 
     public async searchArtifactory(
@@ -120,4 +119,11 @@ export class ArtifactoryClient {
 
         return out;
     }
+}
+
+export function filenameFromUrl(url: string): string {
+    const path = new URL(url).searchParams.get('path');
+    const name = path?.split('/').pop();
+    if (!name) throw new Error(`Could not derive a filename from url: ${url}`);
+    return name;
 }
