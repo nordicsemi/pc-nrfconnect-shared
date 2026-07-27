@@ -59,7 +59,6 @@ type StartLogin = () => GenericAuthResult<null>;
 type SingleSignOut = () => GenericAuthResult<null>;
 type GetAccessToken = (scopes?: string[]) => GenericAuthResult<string>;
 type GetIdToken = (scopes?: string[]) => GenericAuthResult<string>;
-type GetAccountInfo = () => GenericAuthResult<AccountInfo>;
 type GetProfileInfo = () => GenericAuthResult<ProfileInfo>;
 
 // main to renderers
@@ -90,15 +89,11 @@ const registerGetIdToken = handle<GetIdToken>(channel.getIdToken);
 const getAccessToken = invoke<GetAccessToken>(channel.getAccessToken);
 const registerGetAccessToken = handle<GetAccessToken>(channel.getAccessToken);
 
-const getAccountInfo = invoke<GetAccountInfo>(channel.getAccount);
-const registerGetAccountInfo = handle<GetAccountInfo>(channel.getAccount);
-
 const getProfileInfo = invoke<GetProfileInfo>(channel.getProfileInfo);
 const registerGetProfileInfo = handle<GetProfileInfo>(channel.getProfileInfo);
 
 export const forRenderer = {
     registerStartLogin,
-    registerGetAccountInfo,
     registerSingleSignOut,
     registerGetIdToken,
     registerGetAccessToken,
@@ -109,7 +104,6 @@ export const forRenderer = {
 };
 export const inMain = {
     startLogin,
-    getAccountInfo,
     singleSignOut,
     getAccessToken,
     getIdToken,
