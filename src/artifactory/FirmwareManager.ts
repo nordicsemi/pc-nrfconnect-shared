@@ -12,10 +12,7 @@ import { getAppDataDir, getAppDir } from '../utils/appDirs';
 import {
     type Artifact,
     ArtifactScheme,
-    type Firmware,
     FirmwareClient,
-    FirmwareScheme,
-    type NetworkFirmware,
 } from './FirmwareClient';
 
 export class FirmwareManager extends FirmwareClient {
@@ -36,15 +33,15 @@ export class FirmwareManager extends FirmwareClient {
         this.DOWNLOADDEPS = deps;
     }
 
-    private async loadBundledSource(): Promise<Firmware[]> {
+    private async loadBundledSource(): Promise<Artifact[]> {
         try {
             const content = await readFile(
                 join(this.BUNDLEDDIR, 'source.json'),
                 'utf-8',
             );
             return z
-                .array(FirmwareScheme)
-                .parse(JSON.parse(content)) as Firmware[];
+                .array(ArtifactScheme)
+                .parse(JSON.parse(content)) as Artifact[];
         } catch (e) {
             console.error(`Error loading bundled source file, got error: ${e}`);
             return [];
@@ -74,24 +71,24 @@ export class FirmwareManager extends FirmwareClient {
     }
 
     // Syncs with bundle and upstream and returns list of firmwares (dependencies and application itself)
-    public getFirmwares(fw: Artifact): Firmware[] {
+    public getFirmwares(fw: Artifact): Artifact[] {
         const ins: Artifact[] = [fw];
 
-        const out: Firmware[] = [];
+        const out: Artifact[] = [];
 
         if (fw.dependencies) {
             fw.dependencies.forEach(f => ins.push(f));
         }
 
         ins.forEach(async f => {
-            out.push(await this.getFile(f));
+            out.push(await this.getFirmware(f));
         });
 
         return out;
     }
 
-    protected async getFileOrBundle(fw: NetworkFirmware) {
-        const cachedSource = await this.loadCachedSource();
+    protected async getFileOrBundle(fw: Artifact) {
+        const cachedSource = await this.loadSource();
         let cachedFirmware;
 
         if (this.CACHE) {
@@ -102,8 +99,6 @@ export class FirmwareManager extends FirmwareClient {
                     f.type === fw.type &&
                     (fw.version === undefined || f.version === fw.version),
             );
-        } else {
-            cachedSource.forEach(f => this.removeSource(f));
         }
 
         const upstreamFirmware = await this.fetchFirmware(fw);
@@ -130,8 +125,8 @@ export class FirmwareManager extends FirmwareClient {
 
     protected async loadBundledFirmware(
         fw: Artifact,
-        upstreamFirmware: NetworkFirmware,
-    ): Promise<Firmware> {
+        upstreamFirmware: Artifact,
+    ): Promise<Artifact> {
         const bundledSource = await this.loadBundledSource();
         const bundledFirmware = bundledSource.find(
             f =>
@@ -161,14 +156,14 @@ export class FirmwareManager extends FirmwareClient {
 
         this.putSource({
             ...bundledFirmware,
-            file: this.absolutePath(bundledFirmware.file),
+            file: join(this.BUNDLEDDIR, bundledFirmware.file),
         });
 
         console.log(`Copying firmware ${bundledFirmware.name} from bundle`);
 
         return {
             ...bundledFirmware,
-            file: this.absolutePath(bundledFirmware.file),
+            file: join(this.BUNDLEDDIR, bundledFirmware.file),
         };
     }
 }
