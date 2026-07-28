@@ -52,7 +52,6 @@ export type GenericAuthResult<T> =
     | { status: true; data: T }
     | { status: false; error: string };
 
-// The logical type is not wrapped in a promise. Invoke adds the promise itself.
 type GetAuthStatus = () => AuthState;
 type OnStateChanged = (state: AuthState) => void;
 type StartLogin = () => GenericAuthResult<null>;
@@ -61,7 +60,6 @@ type GetAccessToken = (scopes?: string[]) => GenericAuthResult<string>;
 type GetIdToken = (scopes?: string[]) => GenericAuthResult<string>;
 type GetProfileInfo = () => GenericAuthResult<ProfileInfo>;
 
-// main to renderers
 const broadcastStateChangedRaw = broadcast<OnStateChanged>(
     channel.onStateChanged,
 );
