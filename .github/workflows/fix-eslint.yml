@@ -6,7 +6,7 @@ name: Fix eslint
 # "Run workflow" branch picker. Protected branches are rejected at runtime.
 
 on:
-    workflow_dispatch:
+    workflow_call:
 
 permissions:
     contents: write
