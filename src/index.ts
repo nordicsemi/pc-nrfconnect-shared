@@ -32,7 +32,7 @@ export {
     ArtifactoryClient,
     type AResponse,
 } from './artifactory/ArtifactoryClient';
-export { FirmwareManager } from './artifactory/FirmwareManager';
+export { ApplicationClient } from './artifactory/ApplicationClient';
 export {
     FirmwareClient,
     type Firmware,

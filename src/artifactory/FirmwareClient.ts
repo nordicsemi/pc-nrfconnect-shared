@@ -200,7 +200,9 @@ export class FirmwareClient {
         if (filter.type) props.type = filter.type;
         if (filter.device) props.device = filter.device;
 
-        const res = await this.CLIENT.searchArtifactory(props);
+        const res = (await this.CLIENT.searchArtifactory(props)).filter(
+            r => r.properties.type[0] !== 'Dependency',
+        );
         const artifacts = await this.mapToFirmwareFormat(res);
 
         const unique = new Map<string, Firmware>();

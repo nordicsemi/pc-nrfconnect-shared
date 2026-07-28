@@ -12,51 +12,37 @@ import { getAppDataDir, getAppDir } from '../utils/appDirs';
 import {
     type Firmware,
     FirmwareClient,
-    FirmwareScheme,
     type Source,
     SourceScheme,
 } from './FirmwareClient';
 
-export class FirmwareManager extends FirmwareClient {
-    BUNDLEDDIR: string;
-    CACHE: boolean;
-    DOWNLOADDEPS: boolean;
+type FirmwareManagerProps = {
+    dataDirectory: string;
+    bundledDirectory: string;
+    server: string;
+    repo: string;
+};
 
-    constructor(
-        dataDirectory: string = getAppDataDir(),
-        bundledDirectory: string = join(getAppDir(), 'resources', 'firmware'),
-        server: string = 'files.nordicsemi.com',
-        repo: string = 'swtools',
-        deps: boolean = true,
-    ) {
+export class ApplicationClient extends FirmwareClient {
+    BUNDLEDDIR: string;
+
+    constructor({
+        dataDirectory = getAppDataDir(),
+        bundledDirectory = join(getAppDir(), 'resources', 'firmware'),
+        server = 'files.nordicsemi.com',
+        repo = 'swtools',
+    }: FirmwareManagerProps) {
         super({ server, repo, directory: dataDirectory });
         this.BUNDLEDDIR = resolve(bundledDirectory);
-        this.CACHE = true;
-        this.DOWNLOADDEPS = deps;
     }
 
-    private async loadBundledSource(): Promise<Source[]> {
-        try {
-            const content = await readFile(
-                join(this.BUNDLEDDIR, 'source.json'),
-                'utf-8',
-            );
-            return z.array(SourceScheme).parse(JSON.parse(content));
-        } catch (e) {
-            console.error(`Error loading bundled source file, got error: ${e}`);
-            return [];
-        }
-    }
-
-    public async loadReqList(): Promise<Firmware[]> {
+    public async loadReqList(): Promise<Source[]> {
         try {
             const content = await readFile(
                 join(this.BUNDLEDDIR, 'requested.json'),
                 'utf-8',
             );
-            return z
-                .array(FirmwareScheme)
-                .parse(JSON.parse(content)) as Firmware[];
+            return z.array(SourceScheme).parse(JSON.parse(content));
         } catch (e) {
             console.error(`Error loading requested firmwares, got error: ${e}`);
             return [];
@@ -66,7 +52,7 @@ export class FirmwareManager extends FirmwareClient {
     public async updateCache(): Promise<void> {
         const req = await this.loadReqList();
         req.forEach(app => {
-            this.getFirmwares(app);
+            this.getFirmwareWithDeps(app);
         });
     }
 
@@ -89,17 +75,13 @@ export class FirmwareManager extends FirmwareClient {
 
     protected async getFileOrBundle(fw: Firmware) {
         const cachedSource = await this.loadSource();
-        let cachedFirmware;
-
-        if (this.CACHE) {
-            cachedFirmware = cachedSource.find(
-                f =>
-                    f.name === fw.name &&
-                    f.device === fw.device &&
-                    f.type === fw.type &&
-                    (fw.version === undefined || f.version === fw.version),
-            );
-        }
+        const cachedFirmware = cachedSource.find(
+            f =>
+                f.name === fw.name &&
+                f.device === fw.device &&
+                f.type === fw.type &&
+                (fw.version === undefined || f.version === fw.version),
+        );
 
         const upstreamFirmware = await this.fetchFirmware(fw);
 
@@ -127,7 +109,7 @@ export class FirmwareManager extends FirmwareClient {
         fw: Firmware,
         upstreamFirmware: Source,
     ): Promise<Firmware> {
-        const bundledSource = await this.loadBundledSource();
+        const bundledSource = await this.loadReqList();
         const bundledFirmware = bundledSource.find(
             f =>
                 f.name === fw.name &&
@@ -154,10 +136,9 @@ export class FirmwareManager extends FirmwareClient {
             join(this.DATADIR, 'firmware', bundledFirmware.file),
         );
 
-        this.putSource({
-            ...bundledFirmware,
-            file: join(this.BUNDLEDDIR, bundledFirmware.file),
-        });
+        bundledFirmware.file = join(this.BUNDLEDDIR, bundledFirmware.file);
+
+        this.putSource(bundledFirmware);
 
         console.log(`Copying firmware ${bundledFirmware.name} from bundle`);
 
