@@ -29,7 +29,7 @@ export class FirmwareManager extends FirmwareClient {
         repo: string = 'swtools',
         deps: boolean = true,
     ) {
-        super(server, repo, dataDirectory);
+        super({ server, repo, directory: dataDirectory });
         this.BUNDLEDDIR = resolve(bundledDirectory);
         this.CACHE = true;
         this.DOWNLOADDEPS = deps;

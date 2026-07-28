@@ -18,23 +18,27 @@ import {
 
 export const TypeScheme = z.enum(['Modem', 'Network', 'Application']);
 
+// Mostly used for downloading
 export const ArtifactScheme = z.object({
     name: z.string(), // Identifier associated with functionality (not version or device)
-    version: z.string().optional(), // undefined will usually be understood as "latest is requested"
+    version: z.string(),
     type: TypeScheme, // Max one of each per flash (cant have two Modems on one device at a time)
     device: z.array(z.string()), // Some firmwares support multiple devices (this should be called devices)
     file: z.string().optional(), // Absolute path or download url
 });
 
+// Use this as much as possible
 export const FirmwareScheme = ArtifactScheme.extend({
     title: z.string().optional(),
     description: z.string().optional(),
+    version: z.string().optional(), // undefined will usually be understood as "latest is requested"
     documentation: z
         .union([z.string(), z.object({ label: z.string(), href: z.string() })])
         .optional(),
     dependencies: z.array(ArtifactScheme).optional(),
 });
 
+// Used for caching and validation
 export const SourceScheme = FirmwareScheme.extend({
     file: z.string(), // Sometimes a url or file path is REQUIRED
     version: z.string(), // -- || --
@@ -43,17 +47,23 @@ export const SourceScheme = FirmwareScheme.extend({
 export type Firmware = z.infer<typeof FirmwareScheme>;
 export type Source = z.infer<typeof SourceScheme>;
 
+export type FirmwareClientProps = {
+    server: string;
+    repo: string;
+    directory: string;
+};
+
 export class FirmwareClient {
     protected DATADIR: string;
     protected CLIENT: ArtifactoryClient;
     protected FIRMWAREDIR: string;
 
-    constructor(
-        server: string = 'files.nordicsemi.com',
-        repo: string = 'swtools',
-        dir: string = getAppDataDir(),
-    ) {
-        this.DATADIR = resolve(dir);
+    constructor({
+        server = 'files.nordicsemi.com',
+        repo = 'swtools',
+        directory = getAppDataDir(),
+    }: FirmwareClientProps) {
+        this.DATADIR = resolve(directory);
         this.FIRMWAREDIR = join(this.DATADIR, 'firmware');
         this.CLIENT = new ArtifactoryClient(server, repo, this.FIRMWAREDIR);
     }
