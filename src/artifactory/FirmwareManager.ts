@@ -10,9 +10,11 @@ import { z } from 'zod';
 
 import { getAppDataDir, getAppDir } from '../utils/appDirs';
 import {
-    type Artifact,
-    ArtifactScheme,
+    type Firmware,
     FirmwareClient,
+    FirmwareScheme,
+    type Source,
+    SourceScheme,
 } from './FirmwareClient';
 
 export class FirmwareManager extends FirmwareClient {
@@ -33,30 +35,28 @@ export class FirmwareManager extends FirmwareClient {
         this.DOWNLOADDEPS = deps;
     }
 
-    private async loadBundledSource(): Promise<Artifact[]> {
+    private async loadBundledSource(): Promise<Source[]> {
         try {
             const content = await readFile(
                 join(this.BUNDLEDDIR, 'source.json'),
                 'utf-8',
             );
-            return z
-                .array(ArtifactScheme)
-                .parse(JSON.parse(content)) as Artifact[];
+            return z.array(SourceScheme).parse(JSON.parse(content));
         } catch (e) {
             console.error(`Error loading bundled source file, got error: ${e}`);
             return [];
         }
     }
 
-    public async loadReqList(): Promise<Artifact[]> {
+    public async loadReqList(): Promise<Firmware[]> {
         try {
             const content = await readFile(
                 join(this.BUNDLEDDIR, 'requested.json'),
                 'utf-8',
             );
             return z
-                .array(ArtifactScheme)
-                .parse(JSON.parse(content)) as Artifact[];
+                .array(FirmwareScheme)
+                .parse(JSON.parse(content)) as Firmware[];
         } catch (e) {
             console.error(`Error loading requested firmwares, got error: ${e}`);
             return [];
@@ -71,10 +71,10 @@ export class FirmwareManager extends FirmwareClient {
     }
 
     // Syncs with bundle and upstream and returns list of firmwares (dependencies and application itself)
-    public getFirmwares(fw: Artifact): Artifact[] {
-        const ins: Artifact[] = [fw];
+    public getFirmwares(fw: Firmware): Firmware[] {
+        const ins: Firmware[] = [fw];
 
-        const out: Artifact[] = [];
+        const out: Firmware[] = [];
 
         if (fw.dependencies) {
             fw.dependencies.forEach(f => ins.push(f));
@@ -87,7 +87,7 @@ export class FirmwareManager extends FirmwareClient {
         return out;
     }
 
-    protected async getFileOrBundle(fw: Artifact) {
+    protected async getFileOrBundle(fw: Firmware) {
         const cachedSource = await this.loadSource();
         let cachedFirmware;
 
@@ -124,9 +124,9 @@ export class FirmwareManager extends FirmwareClient {
     }
 
     protected async loadBundledFirmware(
-        fw: Artifact,
-        upstreamFirmware: Artifact,
-    ): Promise<Artifact> {
+        fw: Firmware,
+        upstreamFirmware: Source,
+    ): Promise<Firmware> {
         const bundledSource = await this.loadBundledSource();
         const bundledFirmware = bundledSource.find(
             f =>

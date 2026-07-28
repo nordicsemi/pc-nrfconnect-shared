@@ -5,7 +5,7 @@
  */
 
 import { mkdir, writeFile } from 'fs/promises';
-import { dirname, join, resolve } from 'path';
+import { join, resolve } from 'path';
 import { z } from 'zod';
 
 export type AQueryProps = {
@@ -52,12 +52,12 @@ export class ArtifactoryClient {
 
     constructor(server: string, repo: string, dir: string) {
         this.SERVER = server;
-        this.REPO = repo;
+        this.REPO = encodeURIComponent(repo);
         this.DIR = dir;
     }
 
     public downloadUrl = (path: string): string =>
-        `https://${this.SERVER}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${this.REPO}&path=${path}`;
+        `https://${this.SERVER}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${this.REPO}&path=${encodeURIComponent(path)}`;
 
     public async downloadArtifact(path: string): Promise<void> {
         const pathByPieces = path.split('/');
@@ -66,7 +66,7 @@ export class ArtifactoryClient {
             join(this.DIR, pathByPieces[pathByPieces.length - 1]),
         );
 
-        mkdir(dirname(dir), { recursive: true });
+        await mkdir(dir, { recursive: true });
         const url: string = this.downloadUrl(path);
         const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
         await writeFile(dir, buffer);
@@ -78,7 +78,7 @@ export class ArtifactoryClient {
         const dir = resolve(this.DIR);
         const target = join(dir, filename);
 
-        await mkdir(dir, { recursive: true }); // the folder we write INTO, and awaited
+        await mkdir(dir, { recursive: true });
         const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
         await writeFile(target, buffer);
     }
@@ -118,6 +118,13 @@ export class ArtifactoryClient {
         const out: AResponse = AResponseScheme.parse(resJson.results);
 
         return out;
+    }
+
+    public async fetchJsonFromPath(path: string): Promise<unknown> {
+        const url = this.downloadUrl(path);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+        return res.json();
     }
 }
 
