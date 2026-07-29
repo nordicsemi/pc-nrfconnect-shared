@@ -48,9 +48,9 @@ export type Firmware = z.infer<typeof FirmwareScheme>;
 export type Source = z.infer<typeof SourceScheme>;
 
 export type FirmwareClientProps = {
-    server: string;
-    repo: string;
-    directory: string;
+    server?: string;
+    repo?: string;
+    directory?: string;
 };
 
 export class FirmwareClient {
@@ -124,7 +124,7 @@ export class FirmwareClient {
         return out;
     }
 
-    public async getFirmware(fw: Firmware): Promise<Firmware> {
+    public async getFirmware(fw: Firmware): Promise<Source> {
         const cachedSource = await this.loadSource();
 
         const cachedFirmware = cachedSource
@@ -150,7 +150,7 @@ export class FirmwareClient {
         return await this.downloadFirmware(upstreamFirmware);
     }
 
-    public async getFirmwareWithDeps(fw: Firmware): Promise<Firmware[]> {
+    public async getFirmwareWithDeps(fw: Firmware): Promise<Source[]> {
         const all = [fw, ...(fw.dependencies ?? [])];
         return await Promise.all(all.map(f => this.getFirmware(f)));
     }
