@@ -127,7 +127,9 @@ export class FirmwareClient {
     public async getFirmware(fw: Firmware): Promise<Firmware> {
         const cachedSource = await this.loadSource();
 
-        const cachedFirmware = cachedSource.find(isSameFirmware(fw));
+        const cachedFirmware = cachedSource
+            .filter(isSameFirmware(fw))
+            .sort((a, b) => compareVersionDesc(a.version, b.version))[0];
 
         if (cachedFirmware && fw.version) return cachedFirmware;
 
@@ -195,7 +197,7 @@ export class FirmwareClient {
     public async listFirmware(filter: {
         type?: Firmware['type'];
         device?: string;
-    }): Promise<Firmware[]> {
+    }): Promise<Source[]> {
         const props: AQueryProps = { latest: 'true' };
         if (filter.type) props.type = filter.type;
         if (filter.device) props.device = filter.device;
@@ -205,8 +207,8 @@ export class FirmwareClient {
         );
         const artifacts = await this.mapToFirmwareFormat(res);
 
-        const unique = new Map<string, Firmware>();
-        artifacts.forEach(a => unique.set(`${a.name}:${a.type}`, a));
+        const unique = new Map<string, Source>();
+        artifacts.forEach(a => unique.set(`${a.file}:${a.type}`, a));
         return [...unique.values()];
     }
 

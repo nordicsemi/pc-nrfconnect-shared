@@ -16,7 +16,7 @@ import {
     SourceScheme,
 } from './FirmwareClient';
 
-type FirmwareManagerProps = {
+type ApplicationClientProps = {
     dataDirectory: string;
     bundledDirectory: string;
     server: string;
@@ -31,12 +31,12 @@ export class ApplicationClient extends FirmwareClient {
         bundledDirectory = join(getAppDir(), 'resources', 'firmware'),
         server = 'files.nordicsemi.com',
         repo = 'swtools',
-    }: FirmwareManagerProps) {
+    }: ApplicationClientProps) {
         super({ server, repo, directory: dataDirectory });
         this.BUNDLEDDIR = resolve(bundledDirectory);
     }
 
-    public async loadReqList(): Promise<Source[]> {
+    public async loadIndex(): Promise<Source[]> {
         try {
             const content = await readFile(
                 join(this.BUNDLEDDIR, 'requested.json'),
@@ -50,14 +50,14 @@ export class ApplicationClient extends FirmwareClient {
     }
 
     public async updateCache(): Promise<void> {
-        const req = await this.loadReqList();
+        const req = await this.loadIndex();
         req.forEach(app => {
             this.getFirmwareWithDeps(app);
         });
     }
 
     // Syncs with bundle and upstream and returns list of firmwares (dependencies and application itself)
-    public getFirmwares(fw: Firmware): Firmware[] {
+    public getApplication(fw: Firmware): Firmware[] {
         const ins: Firmware[] = [fw];
 
         const out: Firmware[] = [];
@@ -109,7 +109,7 @@ export class ApplicationClient extends FirmwareClient {
         fw: Firmware,
         upstreamFirmware: Source,
     ): Promise<Firmware> {
-        const bundledSource = await this.loadReqList();
+        const bundledSource = await this.loadIndex();
         const bundledFirmware = bundledSource.find(
             f =>
                 f.name === fw.name &&
