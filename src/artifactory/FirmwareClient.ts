@@ -248,6 +248,9 @@ export class FirmwareClient {
                     version: r.properties.version[0],
                     device: r.properties.device,
                     file: this.CLIENT.downloadUrl(r.path),
+                    title: r.properties.title?.[0],
+                    documentation: r.properties.documentation?.[0],
+                    description: r.properties.description?.[0],
                 };
 
                 if (r.properties.dependencyfile?.[0]) {
