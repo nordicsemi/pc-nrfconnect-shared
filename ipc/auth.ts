@@ -12,10 +12,8 @@ import { handle, invoke } from './infrastructure/rendererToMain';
 const channel = {
     start: 'auth:start',
     singleSignOut: 'auth:single-sign-out',
-    checkLoginStatus: 'auth:check-login-status',
     getIdToken: 'auth:get-id-token',
     getAccessToken: 'auth:get-access-token',
-    getAccount: 'auth:get-account',
     getProfileInfo: 'auth:get-profile-info',
     getStatus: 'auth:get-status',
     onStateChanged: 'auth:on-state-changed',
