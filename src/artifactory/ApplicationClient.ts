@@ -57,7 +57,13 @@ export class ApplicationClient extends FirmwareClient {
     }
 
     public async getApplication(fw: Firmware): Promise<Source[]> {
-        const all: Firmware[] = [fw, ...(fw.dependencies ?? [])];
+        const all: Firmware[] = [fw];
+
+        if (fw.dependencies) {
+            fw.dependencies.forEach(f => {
+                all.push({ ...f, device: fw.device });
+            });
+        }
         return await Promise.all(all.map(f => this.getIndexedFirmware(f)));
     }
 

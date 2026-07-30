@@ -18,32 +18,34 @@ import {
 
 export const TypeScheme = z.enum(['Modem', 'Network', 'Application']);
 
-// Mostly used for downloading
-export const ArtifactScheme = z.object({
-    name: z.string(), // Identifier associated with functionality (not version or device)
+export const DependencyScheme = z.object({
+    name: z.string(),
     version: z.string(),
-    type: TypeScheme, // Max one of each per flash (cant have two Modems on one device at a time)
-    device: z.array(z.string()), // Some firmwares support multiple devices (this should be called devices)
-    file: z.string().optional(), // Absolute path or download url
 });
 
 // Use this as much as possible
-export const FirmwareScheme = ArtifactScheme.extend({
+export const FirmwareScheme = z.object({
+    // name and device lets you uniquely identify each firmware
+    name: z.string(), // Identifier associated with functionality (not version or device)
+    device: z.array(z.string()), // Some firmwares support multiple devices (this should be called devices)
+
+    type: TypeScheme.optional(),
+    file: z.string().optional(), // Absolute path or download url
     title: z.string().optional(),
     description: z.string().optional(),
     version: z.string().optional(), // undefined will usually be understood as "latest is requested"
-    documentation: z
-        .union([z.string(), z.object({ label: z.string(), href: z.string() })])
-        .optional(),
-    dependencies: z.array(ArtifactScheme).optional(),
+    documentation: z.string().optional(), // link
+    dependencies: z.array(DependencyScheme).optional(), // map of name:version
 });
 
 // Used for caching and validation
 export const SourceScheme = FirmwareScheme.extend({
-    file: z.string(), // Sometimes a url or file path is REQUIRED
+    type: TypeScheme, // Max one of each per flash (cant have two Modems on one device at a time)
+    file: z.string(), // When a file is actually in use a file path is REQUIRED
     version: z.string(), // -- || --
 });
 
+export type Dependency = z.infer<typeof DependencyScheme>;
 export type Firmware = z.infer<typeof FirmwareScheme>;
 export type Source = z.infer<typeof SourceScheme>;
 
@@ -151,7 +153,13 @@ export class FirmwareClient {
     }
 
     public async getFirmwareWithDeps(fw: Firmware): Promise<Source[]> {
-        const all = [fw, ...(fw.dependencies ?? [])];
+        const all: Firmware[] = [fw];
+
+        if (fw.dependencies) {
+            fw.dependencies.forEach(f => {
+                all.push({ ...f, device: fw.device });
+            });
+        }
         return await Promise.all(all.map(f => this.getFirmware(f)));
     }
 
@@ -205,7 +213,7 @@ export class FirmwareClient {
         const res = (await this.CLIENT.searchArtifactory(props)).filter(
             r => r.properties.type[0] !== 'Dependency',
         );
-        const artifacts = await this.mapToFirmwareFormat(res);
+        const artifacts = this.mapToFirmwareFormat(res);
 
         const unique = new Map<string, Source>();
         artifacts.forEach(a => unique.set(`${a.file}:${a.type}`, a));
@@ -236,67 +244,43 @@ export class FirmwareClient {
                 `Multiple firmwares found for query ${JSON.stringify(fw)}, trying first index`,
             );
         }
-        return (await this.mapToFirmwareFormat(res))[0];
+        return this.mapToFirmwareFormat(res)[0];
     }
 
-    protected mapToFirmwareFormat(res: AResponse): Promise<Source[]> {
-        return Promise.all(
-            res.map(async r => {
-                let outFirmware: Source = {
-                    name: r.properties.name[0],
-                    type: TypeScheme.parse(r.properties.type[0]),
-                    version: r.properties.version[0],
-                    device: r.properties.device,
-                    file: this.CLIENT.downloadUrl(r.path),
-                    title: r.properties.title?.[0],
-                    documentation: r.properties.documentation?.[0],
-                    description: r.properties.description?.[0],
-                };
+    protected mapToFirmwareFormat(res: AResponse): Source[] {
+        return res.map(r => {
+            const outFirmware: Source = {
+                name: r.properties.name[0],
+                type: TypeScheme.parse(r.properties.type[0]),
+                version: r.properties.version[0],
+                device: r.properties.device,
+                file: this.CLIENT.downloadUrl(r.path),
+                title: r.properties.title?.[0],
+                documentation: r.properties.documentation?.[0],
+                description: r.properties.description?.[0],
+            };
 
-                if (r.properties.dependencyfile?.[0]) {
-                    let depprops: AQueryProps = {
-                        name: r.properties.dependencyfile[0],
-                        type: 'Dependency',
-                    };
+            const deps = r.properties.dependencies;
 
-                    if (outFirmware.version) {
-                        depprops = {
-                            version: outFirmware.version,
-                            ...depprops,
-                        };
-                    } else {
-                        depprops = { latest: 'true', ...depprops };
-                    }
+            if (deps) {
+                const outDeps: Dependency[] = [];
 
-                    const depsearch =
-                        await this.CLIENT.searchArtifactory(depprops);
+                deps.forEach(dep => {
+                    const d = dep.split(':');
 
-                    if (depsearch.length === 0) {
-                        throw new Error(
-                            `Dependency manifest '${r.properties.dependencyfile[0]}' not found for ${r.properties.name[0]}`,
-                        );
-                    }
+                    outDeps.push({ name: d[0], version: d[1] });
+                });
 
-                    const depfile = z
-                        .array(SourceScheme)
-                        .parse(
-                            await this.CLIENT.fetchJsonFromPath(
-                                depsearch[0].path,
-                            ),
-                        );
-
-                    outFirmware = { ...outFirmware, dependencies: depfile };
-                }
-                return outFirmware;
-            }),
-        );
+                outFirmware.dependencies = outDeps;
+            }
+            return outFirmware;
+        });
     }
 }
 
 function mapToQueryProps(fw: Firmware, allVersions?: boolean): AQueryProps {
     const props: AQueryProps = {
         name: fw.name,
-        type: fw.type,
         device: fw.device[0],
     };
 
