@@ -104,8 +104,12 @@ export class FirmwareClient {
         fw: Firmware,
         allVersions?: boolean,
     ): Promise<AResponse> {
+        const version = () => {
+            if (allVersions) return 'all';
+        };
+
         const diffProps: AQueryProps[] = fw.device.map(d =>
-            mapToQueryProps({ ...fw, device: [d] }, allVersions),
+            mapToQueryProps({ ...fw, device: [d] }, version()),
         );
         const deviceSearches: AResponse[] = await Promise.all(
             diffProps.map(props => this.CLIENT.searchArtifactory(props)),
@@ -153,14 +157,21 @@ export class FirmwareClient {
     }
 
     public async getFirmwareWithDeps(fw: Firmware): Promise<Source[]> {
-        const all: Firmware[] = [fw];
+        const fetchedFW: Source = await this.getFirmware(fw);
 
-        if (fw.dependencies) {
-            fw.dependencies.forEach(f => {
-                all.push({ ...f, device: fw.device });
-            });
+        let all: Source[] = [fetchedFW];
+        if (fetchedFW.dependencies) {
+            all = [
+                fetchedFW,
+                ...(await Promise.all(
+                    fetchedFW.dependencies.map(f =>
+                        this.getFirmware({ ...f, device: fw.device }),
+                    ),
+                )),
+            ];
         }
-        return await Promise.all(all.map(f => this.getFirmware(f)));
+
+        return all;
     }
 
     public async deleteFirmware(fw: Firmware): Promise<void> {
@@ -234,8 +245,17 @@ export class FirmwareClient {
         return outFirmware;
     }
 
-    protected async fetchFirmware(fw: Firmware): Promise<Source> {
-        const res = await this.CLIENT.searchArtifactory(mapToQueryProps(fw));
+    protected async fetchFirmware(
+        fw: Firmware,
+        latest?: boolean,
+    ): Promise<Source> {
+        const version = () => {
+            if (latest) return 'latest';
+        };
+
+        const res = await this.CLIENT.searchArtifactory(
+            mapToQueryProps(fw, version()),
+        );
         if (res.length === 0) {
             throw new Error(`No artifact found for ${fw.name} (${fw.type})`);
         }
@@ -278,23 +298,32 @@ export class FirmwareClient {
     }
 }
 
-function mapToQueryProps(fw: Firmware, allVersions?: boolean): AQueryProps {
+function mapToQueryProps(
+    fw: Firmware,
+    version: 'latest' | 'all' | 'exact' = 'exact',
+): AQueryProps {
     const props: AQueryProps = {
         name: fw.name,
         device: fw.device[0],
     };
 
-    if (allVersions) return props;
-    if (fw.version) props.version = fw.version;
-    else props.latest = 'true';
-
+    switch (version) {
+        case 'all':
+            return props;
+        case 'latest':
+            props.latest = 'true';
+            break;
+        case 'exact':
+            if (!fw.version) props.latest = 'true';
+            else props.version = fw.version;
+            break;
+    }
     return props;
 }
 
 export const isSameFirmware = (i: Firmware) => (j: Firmware) =>
     i.name === j.name &&
     i.device.every(d => j.device.includes(d)) &&
-    i.type === j.type &&
     (i.version === j.version ||
         j.version === undefined ||
         i.version === undefined);

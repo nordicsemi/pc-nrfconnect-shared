@@ -53,54 +53,64 @@ export class ApplicationClient extends FirmwareClient {
 
     public async updateCache(): Promise<void> {
         const index = await this.loadIndex();
-        await Promise.all(index.map(fw => this.getApplication(fw)));
+        await Promise.all(index.map(fw => this.getIndexedFirmwareWithDeps(fw)));
     }
 
-    public async getApplication(fw: Firmware): Promise<Source[]> {
-        const all: Firmware[] = [fw];
+    public async getIndexedFirmwareWithDeps(fw: Firmware): Promise<Source[]> {
+        const fetchedFW: Source = await this.getIndexedFirmware(fw, true);
 
-        if (fw.dependencies) {
-            fw.dependencies.forEach(f => {
-                all.push({ ...f, device: fw.device });
-            });
+        let all: Source[] = [fetchedFW];
+        if (fetchedFW.dependencies) {
+            all = [
+                fetchedFW,
+                ...(await Promise.all(
+                    fetchedFW.dependencies.map(f =>
+                        this.getIndexedFirmware({ ...f, device: fw.device }),
+                    ),
+                )),
+            ];
         }
-        return await Promise.all(all.map(f => this.getIndexedFirmware(f)));
+
+        return all;
     }
 
-    protected async getIndexedFirmware(fw: Firmware): Promise<Source> {
+    public async getIndexedFirmware(
+        fw: Firmware,
+        latest?: boolean,
+    ): Promise<Source> {
         const match = isSameFirmware(fw);
+        const newest = (sources: Source[]) =>
+            sources
+                .filter(match)
+                .sort((a, b) => compareVersionDesc(a.version, b.version))[0];
 
-        const cachedFirmware = (await this.loadSource())
-            .filter(match)
-            .sort((a, b) => compareVersionDesc(a.version, b.version))[0];
+        const cached = newest(await this.loadSource());
+        const bundled = newest(await this.loadIndex());
 
-        if (cachedFirmware && fw.version) return cachedFirmware;
-
-        const upstreamFirmware = await this.fetchFirmware(fw);
-
-        if (
-            cachedFirmware &&
-            cachedFirmware.version === upstreamFirmware.version
-        ) {
-            console.log(`Returning firmware ${cachedFirmware.name} from cache`);
-            return cachedFirmware;
+        if (!latest) {
+            if (cached) {
+                console.log(`Returning firmware ${cached.name} from cache`);
+                return cached;
+            }
+            if (bundled) return this.copyBundledFirmware(bundled);
+        } else {
+            const upstream = await this.fetchFirmware(fw, latest);
+            if (cached?.version === upstream.version) {
+                console.log(`Returning firmware ${cached.name} from cache`);
+                return cached;
+            }
+            if (bundled?.version === upstream.version) {
+                return this.copyBundledFirmware(bundled);
+            }
+            console.log(
+                `Downloading firmware ${upstream.name} from artifactory`,
+            );
+            return this.downloadFirmware(upstream);
         }
 
-        const bundledFirmware = (await this.loadIndex())
-            .filter(match)
-            .sort((a, b) => compareVersionDesc(a.version, b.version))[0];
-
-        if (
-            bundledFirmware &&
-            bundledFirmware.version === upstreamFirmware.version
-        ) {
-            return this.copyBundledFirmware(bundledFirmware);
-        }
-
-        console.log(
-            `Downloading firmware ${upstreamFirmware.name} from artifactory`,
-        );
-        return this.downloadFirmware(upstreamFirmware);
+        const upstream = await this.fetchFirmware(fw, latest);
+        console.log(`Downloading firmware ${upstream.name} from artifactory`);
+        return this.downloadFirmware(upstream);
     }
 
     protected async copyBundledFirmware(bundled: Source): Promise<Source> {
