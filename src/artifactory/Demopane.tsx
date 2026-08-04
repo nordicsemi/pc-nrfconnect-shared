@@ -7,34 +7,41 @@ import React from 'react';
 import { join } from 'path';
 
 import { getAppDataDir } from '../utils/appDirs';
-import { type AResponse, ArtifactoryClient } from './ArtifactoryClient';
+import { ApplicationClient } from './ApplicationClient';
+import {
+    type AQueryProps,
+    type AResponse,
+    ArtifactoryClient,
+} from './ArtifactoryClient';
+import { type Firmware, FirmwareClient } from './FirmwareClient';
 
 const NordicURL = 'files.noridcsemi.com';
-const downloadPath = join(getAppDataDir(), 'firmware');
+const downloadPath = join(getAppDataDir(), 'testdownloads');
 
-export const Testpane: React.FC = () => {
+type type = 'Modem' | 'Application' | 'Network' | undefined;
+
+const ArtClient = new ArtifactoryClient(NordicURL, 'swtools', downloadPath);
+const FwClient = new FirmwareClient();
+const AppClient = new ApplicationClient();
+
+export const Demopane: React.FC = () => {
     const [name, setName] = React.useState('');
     const [device, setDevice] = React.useState('');
     const [type, setType] = React.useState('');
 
-    const Client = new ArtifactoryClient(NordicURL, 'swtools', downloadPath);
+    const handleArtifactDemo = async (props: AQueryProps) => {
+        const res: AResponse = await ArtClient.searchArtifactory(props);
 
-    const handleSearch = async (
-        inDevice: string,
-        inType: string,
-        inName: string,
-    ) => {
-        console.log({ name, device, type });
+        ArtClient.downloadArtifactFromPath(res[0].path);
+    };
 
-        const query = {
-            device: inDevice,
-            type: inType,
-            name: inName,
-        };
+    const handleFirmwareDemo = async (fw: Firmware, intype: string) => {
+        const outtype: type = intype as type;
+        await FwClient.getFirmware({ ...fw, type: outtype });
+    };
 
-        const res: AResponse = await Client.searchArtifactory(query);
-
-        Client.downloadArtifact(res[0].path);
+    const handleApplicationDemo = async (fw: Firmware) => {
+        await AppClient.getIndexedFirmwareWithDeps(fw);
     };
 
     const devices: string[] = [
@@ -56,7 +63,7 @@ export const Testpane: React.FC = () => {
         'modemfirmware',
     ];
 
-    const types: string[] = ['', 'Application', 'Modem', 'Network'];
+    const types: type[] = [undefined, 'Application', 'Modem', 'Network'];
 
     return (
         <>
@@ -99,10 +106,28 @@ export const Testpane: React.FC = () => {
             <button
                 type="button"
                 onClick={() => {
-                    handleSearch(device, type, name);
+                    handleArtifactDemo({ device, type, name });
                 }}
             >
-                Test
+                Test ArtifactoryClient
+            </button>
+
+            <button
+                type="button"
+                onClick={() => {
+                    handleFirmwareDemo({ device: [device], name }, type);
+                }}
+            >
+                Test FirmwareClient
+            </button>
+
+            <button
+                type="button"
+                onClick={() => {
+                    handleApplicationDemo({ device: [device], name });
+                }}
+            >
+                Test ApplicationClient
             </button>
         </>
     );

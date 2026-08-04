@@ -38,7 +38,7 @@ export {
     type Firmware,
     type Source,
 } from './artifactory/FirmwareClient';
-export { Testpane } from './artifactory/Testpane';
+export { Demopane } from './artifactory/Demopane';
 
 export { Toggle } from './Toggle/Toggle';
 export { default as RootErrorDialog } from './ErrorDialog/ErrorDialog';
