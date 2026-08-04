@@ -13,16 +13,19 @@ import {
     type AResponse,
     ArtifactoryClient,
 } from './ArtifactoryClient';
-import { type Firmware, FirmwareClient } from './FirmwareClient';
+import { type Firmware } from './FirmwareClient';
 
-const NordicURL = 'files.noridcsemi.com';
-const downloadPath = join(getAppDataDir(), 'testdownloads');
+const NordicURL = 'files.nordicsemi.com';
+const demoPath = join(getAppDataDir(), 'demo');
 
 type type = 'Modem' | 'Application' | 'Network' | undefined;
 
-const ArtClient = new ArtifactoryClient(NordicURL, 'swtools', downloadPath);
-const FwClient = new FirmwareClient();
-const AppClient = new ApplicationClient();
+const ArtClient = new ArtifactoryClient(
+    NordicURL,
+    'swtools',
+    join(demoPath, 'downloads'),
+);
+const AppClient = new ApplicationClient({ dataDirectory: demoPath });
 
 export const Demopane: React.FC = () => {
     const [name, setName] = React.useState('');
@@ -37,7 +40,7 @@ export const Demopane: React.FC = () => {
 
     const handleFirmwareDemo = async (fw: Firmware, intype: string) => {
         const outtype: type = intype as type;
-        await FwClient.getFirmware({ ...fw, type: outtype });
+        await AppClient.getFirmware({ ...fw, type: outtype });
     };
 
     const handleApplicationDemo = async (fw: Firmware) => {
