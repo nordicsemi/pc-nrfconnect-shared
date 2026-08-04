@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises';
+import { existsSync } from 'fs';
+import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { z } from 'zod';
 
@@ -36,6 +37,7 @@ export const FirmwareScheme = z.object({
     version: z.string().optional(), // undefined will usually be understood as "latest is requested"
     documentation: z.string().optional(), // link
     dependencies: z.array(DependencyScheme).optional(), // map of name:version
+    checksum: z.string().optional(),
 });
 
 // Used for caching and validation
@@ -64,10 +66,11 @@ export class FirmwareClient {
         server = 'files.nordicsemi.com',
         repo = 'swtools',
         directory = getAppDataDir(),
-    }: FirmwareClientProps) {
+    }: FirmwareClientProps = {}) {
         this.DATADIR = resolve(directory);
         this.FIRMWAREDIR = join(this.DATADIR, 'firmware');
         this.CLIENT = new ArtifactoryClient(server, repo, this.FIRMWAREDIR);
+        this.validateSource();
     }
 
     protected async saveSource(source: Source[]): Promise<void> {
@@ -87,11 +90,30 @@ export class FirmwareClient {
             );
             return z.array(SourceScheme).parse(JSON.parse(content));
         } catch (e) {
+            Promise.all(
+                (await readdir(join(this.DATADIR, 'firmware'))).map(f =>
+                    unlink(f),
+                ),
+            );
             if ((e as NodeJS.ErrnoException).code === 'ENOENT') return [];
             console.error(`Corrupt firmware cache, resetting: ${String(e)}`);
             await this.saveSource([]);
             return [];
         }
+    }
+
+    protected async validateSource(): Promise<void> {
+        const source = await this.loadSource();
+
+        const valid = source.filter(f => existsSync(f.file));
+        const paths: string[] = source.map(f => f.file);
+
+        const entries = await readdir(join(this.DATADIR, 'firmware'));
+        Promise.all(
+            entries.filter(f => !paths.includes(f)).map(f => unlink(f)),
+        );
+
+        this.saveSource(valid);
     }
 
     protected async putSource(fw: Source): Promise<void> {
@@ -232,7 +254,15 @@ export class FirmwareClient {
     }
 
     protected async downloadFirmware(f: Source): Promise<Source> {
-        await this.CLIENT.downloadArtifactFromUrl(f.file);
+        const valid = await this.CLIENT.downloadArtifactFromUrl(
+            f.file,
+            f.checksum,
+        );
+
+        if (!valid) {
+            console.error('invalid checksum'); // TODO add proper error handling
+        }
+
         const path = filenameFromUrl(f.file);
 
         const outFirmware: Source = {
@@ -278,6 +308,7 @@ export class FirmwareClient {
                 title: r.properties.title?.[0],
                 documentation: r.properties.documentation?.[0],
                 description: r.properties.description?.[0],
+                checksum: r.checksums.sha256,
             };
 
             const deps = r.properties.dependencies;

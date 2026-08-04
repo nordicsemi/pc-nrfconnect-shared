@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
+import { createHash } from 'crypto';
 import { mkdir, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { z } from 'zod';
@@ -59,20 +60,23 @@ export class ArtifactoryClient {
     public downloadUrl = (path: string): string =>
         `https://${this.SERVER}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${this.REPO}&path=${encodeURIComponent(path)}`;
 
-    public async downloadArtifact(path: string): Promise<void> {
-        const pathByPieces = path.split('/');
-
-        const dir = resolve(
-            join(this.DIR, pathByPieces[pathByPieces.length - 1]),
+    public async downloadArtifactFromPath(
+        path: string,
+        checksum?: string,
+        algorithm: 'md5' | 'sha1' | 'sha256' = 'sha256',
+    ): Promise<boolean | undefined> {
+        return await this.downloadArtifactFromUrl(
+            this.downloadUrl(path),
+            checksum,
+            algorithm,
         );
-
-        await mkdir(dir, { recursive: true });
-        const url: string = this.downloadUrl(path);
-        const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
-        await writeFile(dir, buffer);
     }
 
-    public async downloadArtifactFromUrl(url: string): Promise<void> {
+    public async downloadArtifactFromUrl(
+        url: string,
+        checksum?: string,
+        algorithm: 'md5' | 'sha1' | 'sha256' = 'sha256',
+    ): Promise<boolean | undefined> {
         const filename = filenameFromUrl(url);
 
         const dir = resolve(this.DIR);
@@ -80,7 +84,20 @@ export class ArtifactoryClient {
 
         await mkdir(dir, { recursive: true });
         const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
-        await writeFile(target, buffer);
+
+        let isValid: boolean | undefined;
+
+        if (checksum) {
+            const actualChecksum = createHash(algorithm)
+                .update(buffer)
+                .digest('hex');
+
+            isValid = checksum.toLowerCase() === actualChecksum.toLowerCase();
+        }
+
+        writeFile(target, buffer);
+
+        return isValid;
     }
 
     public queryUrl(props: AQueryProps): string {
@@ -114,13 +131,12 @@ export class ArtifactoryClient {
         const resJson = await res.json();
 
         console.log(resJson);
-
         const out: AResponse = AResponseScheme.parse(resJson.results);
 
         return out;
     }
 
-    public async fetchJsonFromPath(path: string): Promise<unknown> {
+    public async downloadJsonFromPath(path: string): Promise<unknown> {
         const url = this.downloadUrl(path);
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
