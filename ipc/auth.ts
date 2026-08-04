@@ -52,7 +52,7 @@ export type GenericAuthResult<T> =
 
 type GetAuthStatus = () => AuthState;
 type OnStateChanged = (state: AuthState) => void;
-type StartLogin = () => GenericAuthResult<null>;
+type StartSignIn = () => GenericAuthResult<null>;
 type SingleSignOut = () => GenericAuthResult<null>;
 type GetAccessToken = (scopes?: string[]) => GenericAuthResult<string>;
 type GetIdToken = (scopes?: string[]) => GenericAuthResult<string>;
@@ -74,8 +74,8 @@ const registerOnStateChanged = onBroadcasted<OnStateChanged>(
 const getAuthStatus = invoke<GetAuthStatus>(channel.getStatus);
 const registerGetAuthStatus = handle<GetAuthStatus>(channel.getStatus);
 
-const startLogin = invoke<StartLogin>(channel.start);
-const registerStartLogin = handle<StartLogin>(channel.start);
+const startSignIn = invoke<StartSignIn>(channel.start);
+const registerStartSignIn = handle<StartSignIn>(channel.start);
 
 const singleSignOut = invoke<SingleSignOut>(channel.singleSignOut);
 const registerSingleSignOut = handle<SingleSignOut>(channel.singleSignOut);
@@ -89,7 +89,7 @@ const getProfileInfo = invoke<GetProfileInfo>(channel.getProfileInfo);
 const registerGetProfileInfo = handle<GetProfileInfo>(channel.getProfileInfo);
 
 export const forRenderer = {
-    registerStartLogin,
+    registerStartSignIn,
     registerSingleSignOut,
     registerGetIdToken,
     registerGetAccessToken,
@@ -99,7 +99,7 @@ export const forRenderer = {
     broadcastStateChanged,
 };
 export const inMain = {
-    startLogin,
+    startSignIn,
     singleSignOut,
     getAccessToken,
     getIdToken,
