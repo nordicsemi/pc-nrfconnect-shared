@@ -71,6 +71,7 @@ export class FirmwareClient {
         this.FIRMWAREDIR = join(this.DATADIR, 'firmware');
         this.CLIENT = new ArtifactoryClient(server, repo, this.FIRMWAREDIR);
         this.validateSource();
+        mkdir(this.FIRMWAREDIR, { recursive: true });
     }
 
     protected async saveSource(source: Source[]): Promise<void> {
@@ -91,8 +92,8 @@ export class FirmwareClient {
             return z.array(SourceScheme).parse(JSON.parse(content));
         } catch (e) {
             Promise.all(
-                (await readdir(join(this.DATADIR, 'firmware'))).map(f =>
-                    unlink(f),
+                (await readdir(this.FIRMWAREDIR)).map(f =>
+                    unlink(join(this.FIRMWAREDIR, f)),
                 ),
             );
             if ((e as NodeJS.ErrnoException).code === 'ENOENT') return [];
@@ -108,9 +109,11 @@ export class FirmwareClient {
         const valid = source.filter(f => existsSync(f.file));
         const paths: string[] = source.map(f => f.file);
 
-        const entries = await readdir(join(this.DATADIR, 'firmware'));
+        const entries = await readdir(this.FIRMWAREDIR);
         Promise.all(
-            entries.filter(f => !paths.includes(f)).map(f => unlink(f)),
+            entries
+                .filter(f => !paths.includes(join(this.FIRMWAREDIR, f)))
+                .map(f => unlink(join(this.FIRMWAREDIR, f))),
         );
 
         this.saveSource(valid);
