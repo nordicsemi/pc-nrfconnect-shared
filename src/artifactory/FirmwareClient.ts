@@ -61,6 +61,7 @@ export class FirmwareClient {
     protected DATADIR: string;
     protected CLIENT: ArtifactoryClient;
     protected FIRMWAREDIR: string;
+    protected VALIDATED?: Promise<void>;
 
     constructor({
         server = 'files.nordicsemi.com',
@@ -69,9 +70,8 @@ export class FirmwareClient {
     }: FirmwareClientProps = {}) {
         this.DATADIR = resolve(directory);
         this.FIRMWAREDIR = join(this.DATADIR, 'firmware');
+
         this.CLIENT = new ArtifactoryClient(server, repo, this.FIRMWAREDIR);
-        this.validateSource();
-        mkdir(this.FIRMWAREDIR, { recursive: true });
     }
 
     protected async saveSource(source: Source[]): Promise<void> {
@@ -84,6 +84,11 @@ export class FirmwareClient {
     }
 
     public async loadSource(): Promise<Source[]> {
+        await this.init();
+        return this.getSource();
+    }
+
+    protected async getSource(): Promise<Source[]> {
         try {
             const content = await readFile(
                 join(this.DATADIR, 'source.json'),
@@ -97,26 +102,33 @@ export class FirmwareClient {
                 ),
             );
             if ((e as NodeJS.ErrnoException).code === 'ENOENT') return [];
-            console.error(`Corrupt firmware cache, resetting: ${String(e)}`);
-            await this.saveSource([]);
+            console.error(
+                `Corrupt firmware cache, returning empty: ${String(e)}`,
+            );
             return [];
         }
     }
 
+    protected init(): Promise<void> {
+        this.VALIDATED ??= this.validateSource();
+        return this.VALIDATED;
+    }
+
     protected async validateSource(): Promise<void> {
-        const source = await this.loadSource();
+        await mkdir(this.FIRMWAREDIR, { recursive: true });
+        const source = await this.getSource();
 
         const valid = source.filter(f => existsSync(f.file));
         const paths: string[] = source.map(f => f.file);
 
         const entries = await readdir(this.FIRMWAREDIR);
-        Promise.all(
+        await Promise.all(
             entries
                 .filter(f => !paths.includes(join(this.FIRMWAREDIR, f)))
                 .map(f => unlink(join(this.FIRMWAREDIR, f))),
         );
 
-        this.saveSource(valid);
+        await this.saveSource(valid);
     }
 
     protected async putSource(fw: Source): Promise<void> {
