@@ -27,8 +27,8 @@ export const DependencyScheme = z.object({
 // Use this as much as possible
 export const FirmwareScheme = z.object({
     // name and device lets you uniquely identify each firmware
-    name: z.string(), // Identifier associated with functionality (not version or device)
-    device: z.array(z.string()), // Some firmwares support multiple devices (this should be called devices)
+    name: z.string().min(1), // Identifier associated with functionality (not version or device)
+    device: z.array(z.string()).min(1), // Some firmwares support multiple devices (this should be called devices)
 
     type: TypeScheme.optional(),
     file: z.string().optional(), // Absolute path or download url
@@ -184,6 +184,18 @@ export class FirmwareClient {
         ) {
             console.log(`Returning firmware ${cachedFirmware.name} from cache`);
             return cachedFirmware;
+        }
+
+        const cachedFirmware2 = cachedSource.filter(
+            isSameFirmware(upstreamFirmware),
+        )[0];
+
+        if (
+            cachedFirmware2 &&
+            upstreamFirmware.version === cachedFirmware2.version
+        ) {
+            console.log(`Returning firmware ${cachedFirmware.name} from cache`);
+            return cachedFirmware2;
         }
 
         console.log(

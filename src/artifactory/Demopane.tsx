@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 import React from 'react';
-import { on } from 'events';
 import { readdir } from 'fs/promises';
 import { join, resolve } from 'path';
 
@@ -31,7 +30,7 @@ const AppClient = new ApplicationClient({ dataDirectory: demoPath });
 
 export const Demopane: React.FC = () => {
     const [name, setName] = React.useState('');
-    const [device, setDevice] = React.useState('');
+    const [device, setDevice] = React.useState('nRF9160DK');
     const [type, setType] = React.useState('');
 
     const [downloads, setDownloads] = React.useState<string[]>([]);
@@ -60,7 +59,6 @@ export const Demopane: React.FC = () => {
     };
 
     const devices: string[] = [
-        '',
         'nRF9151DK',
         'nRF9161DK',
         'nRF9160DK',
@@ -84,9 +82,9 @@ export const Demopane: React.FC = () => {
     return (
         <>
             {' '}
-            <div className="tw-flex tw-gap-5">
+            <div className="tw-flex tw-gap-20">
                 <select
-                    className="m-10 tw-min-w-20"
+                    className="tw-min-w-20"
                     value={name}
                     onChange={e => setName(e.target.value)}
                 >
@@ -96,9 +94,8 @@ export const Demopane: React.FC = () => {
                         </option>
                     ))}
                 </select>
-
                 <select
-                    className="m-10 tw-min-w-20"
+                    className="tw-min-w-20"
                     value={device}
                     onChange={e => setDevice(e.target.value)}
                 >
@@ -108,9 +105,8 @@ export const Demopane: React.FC = () => {
                         </option>
                     ))}
                 </select>
-
                 <select
-                    className="m-10 tw-min-w-20"
+                    className="tw-min-w-20"
                     value={type}
                     onChange={e => setType(e.target.value)}
                 >
@@ -121,7 +117,7 @@ export const Demopane: React.FC = () => {
                     ))}
                 </select>
             </div>
-            <div className="tw-wrap">
+            <div className="tw-wrap tw-flex tw-flex-row">
                 <LocalButton
                     onclick={() => {
                         handleArtifactDemo({ device, type, name });
@@ -140,6 +136,28 @@ export const Demopane: React.FC = () => {
                         handleApplicationDemo({ device: [device], name });
                     }}
                 />
+            </div>
+            <div>
+                <h1>FIRMWARES</h1>
+                {firmwares.map(f => (
+                    <div className="tw-p-5" key={f.file}>
+                        <div className="tw-border-2 tw-border-solid tw-bg-nordicBlue-100">
+                            <p>name: {f.name}</p>
+                            <p>devices: {f.device}</p>
+                            <p>type: {f.type}</p>
+                            <p>version: {f.version}</p>
+                            <p>file: {f.file}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <div>
+                <h1>DOWNLOADS</h1>
+                {downloads.map(f => (
+                    <div key={f}>
+                        <p>{f}</p>
+                    </div>
+                ))}
             </div>
         </>
     );
