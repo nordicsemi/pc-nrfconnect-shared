@@ -10,7 +10,8 @@ import { broadcast, onBroadcasted } from './infrastructure/mainToRenderer';
 import { handle, invoke } from './infrastructure/rendererToMain';
 
 const channel = {
-    start: 'auth:start',
+    startSignIn: 'auth:start',
+    cancelSignIn: 'auth:cancel-sign-in',
     singleSignOut: 'auth:single-sign-out',
     getIdToken: 'auth:get-id-token',
     getAccessToken: 'auth:get-access-token',
@@ -53,6 +54,7 @@ export type GenericAuthResult<T> =
 type GetAuthStatus = () => AuthState;
 type OnStateChanged = (state: AuthState) => void;
 type StartSignIn = () => GenericAuthResult<null>;
+type CancelSignIn = () => GenericAuthResult<null>;
 type SingleSignOut = () => GenericAuthResult<null>;
 type GetAccessToken = (scopes?: string[]) => GenericAuthResult<string>;
 type GetIdToken = (scopes?: string[]) => GenericAuthResult<string>;
@@ -74,8 +76,10 @@ const registerOnStateChanged = onBroadcasted<OnStateChanged>(
 const getAuthStatus = invoke<GetAuthStatus>(channel.getStatus);
 const registerGetAuthStatus = handle<GetAuthStatus>(channel.getStatus);
 
-const startSignIn = invoke<StartSignIn>(channel.start);
-const registerStartSignIn = handle<StartSignIn>(channel.start);
+const startSignIn = invoke<StartSignIn>(channel.startSignIn);
+const registerStartSignIn = handle<StartSignIn>(channel.startSignIn);
+const cancelSignIn = invoke<CancelSignIn>(channel.cancelSignIn);
+const registerCancelSignIn = handle<CancelSignIn>(channel.cancelSignIn);
 
 const singleSignOut = invoke<SingleSignOut>(channel.singleSignOut);
 const registerSingleSignOut = handle<SingleSignOut>(channel.singleSignOut);
@@ -90,6 +94,7 @@ const registerGetProfileInfo = handle<GetProfileInfo>(channel.getProfileInfo);
 
 export const forRenderer = {
     registerStartSignIn,
+    registerCancelSignIn,
     registerSingleSignOut,
     registerGetIdToken,
     registerGetAccessToken,
@@ -100,6 +105,7 @@ export const forRenderer = {
 };
 export const inMain = {
     startSignIn,
+    cancelSignIn,
     singleSignOut,
     getAccessToken,
     getIdToken,
