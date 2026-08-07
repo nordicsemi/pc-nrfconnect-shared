@@ -58,7 +58,27 @@ export const Demopane: React.FC = () => {
         setFirmwares(await AppClient.getIndexedFirmwareWithDeps(fw));
     };
 
+    const handleSearchDemo = async (indevice: string, intype: string) => {
+        const outtype: type = intype as type;
+        setFirmwares(
+            await AppClient.listFirmware({
+                type: outtype,
+                device: indevice,
+            }),
+        );
+    };
+
+    // type invalidInputState = 'waiting' | 'none' | 'device' | 'name' | 'both';
+
+    const canSubmit = name !== '' && type !== '';
+
+    const handleDeleteDemo = async (fw: Firmware) => {
+        await AppClient.deleteFirmware(fw);
+        setFirmwares(await AppClient.loadSource());
+    };
+
     const devices: string[] = [
+        '',
         'nRF9151DK',
         'nRF9161DK',
         'nRF9160DK',
@@ -123,17 +143,32 @@ export const Demopane: React.FC = () => {
                         handleArtifactDemo({ device, type, name });
                     }}
                     text="Test ArtifactoryClient"
+                    enabled={canSubmit}
                 />
                 <LocalButton
                     onclick={() => {
                         handleFirmwareDemo({ device: [device], name }, type);
                     }}
                     text="Test FirmwareClient"
+                    enabled={canSubmit}
                 />
                 <LocalButton
                     text="Test ApplicationClient"
                     onclick={() => {
                         handleApplicationDemo({ device: [device], name });
+                    }}
+                    enabled={canSubmit}
+                />
+                <LocalButton
+                    text="Test Search"
+                    onclick={() => {
+                        handleSearchDemo(device, type);
+                    }}
+                />
+                <LocalButton
+                    text="Test Delete"
+                    onclick={() => {
+                        handleDeleteDemo({ device: [device], name });
                     }}
                 />
             </div>
@@ -166,11 +201,12 @@ export const Demopane: React.FC = () => {
 type LocalButtonProps = {
     text: string;
     onclick: () => void;
+    enabled?: boolean;
 };
 
-const LocalButton = ({ text, onclick }: LocalButtonProps) => (
+const LocalButton = ({ text, onclick, enabled = true }: LocalButtonProps) => (
     <div className="tw-p-5">
-        <button type="button" onClick={onclick}>
+        <button type="button" onClick={onclick} disabled={!enabled}>
             {text}
         </button>
     </div>

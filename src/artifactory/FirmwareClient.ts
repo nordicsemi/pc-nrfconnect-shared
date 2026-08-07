@@ -302,7 +302,7 @@ export class FirmwareClient {
         return outFirmware;
     }
 
-    protected async fetchFirmware(
+    public async fetchFirmware(
         fw: Firmware,
         latest?: boolean,
     ): Promise<Source> {
