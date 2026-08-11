@@ -24,7 +24,7 @@ export const DependencyScheme = z.object({
     version: z.string(),
 });
 
-// Use this as much as possible
+// Used for searching and sorting
 export const FirmwareScheme = z.object({
     // name and device lets you uniquely identify each firmware
     name: z.string().min(1), // Identifier associated with functionality (not version or device)
