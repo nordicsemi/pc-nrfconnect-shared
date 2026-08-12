@@ -7,6 +7,10 @@ import React from 'react';
 import { readdir } from 'fs/promises';
 import { join, resolve } from 'path';
 
+import Button from '../Button/Button';
+import Card from '../Card/Card';
+import Dropdown, { type DropdownItem } from '../Dropdown/Dropdown';
+import { Group } from '../Group/Group';
 import { getAppDataDir } from '../utils/appDirs';
 import { ApplicationClient } from './ApplicationClient';
 import {
@@ -28,9 +32,46 @@ const ArtClient = new ArtifactoryClient(
 );
 const AppClient = new ApplicationClient({ dataDirectory: demoPath });
 
+const devices: string[] = [
+    '',
+    'nrf9151dk',
+    'nrf9161dk',
+    'nrf9160dk',
+    'thingy91',
+    'nrf52dk',
+    'nrf53dk',
+];
+
+const names: string[] = [
+    '',
+    'hello_world',
+    'lbs',
+    'peripheral_uart',
+    'power_profiling',
+    'asset_tracker',
+    'modemfirmware',
+];
+
+const types: type[] = [undefined, 'Application', 'Modem', 'Network'];
+
+// The clients expect the lower case spelling, while the labels use the
+// spelling the devices are marketed with.
+const toItems = (values: (string | undefined)[]): DropdownItem[] =>
+    values.map(v => ({
+        label: v || 'SELECT',
+        value: v ?? '',
+    }));
+
+const deviceItems = toItems(devices);
+const nameItems = toItems(names);
+const typeItems = toItems(types);
+
+const itemFor = (items: DropdownItem[], value: string) =>
+    items.find(i => i.value === value) ?? items[0];
+
 export const Demopane: React.FC = () => {
     const [name, setName] = React.useState('');
-    const [device, setDevice] = React.useState('nRF9160DK');
+    const [device, setDevice] = React.useState('');
     const [type, setType] = React.useState('');
 
     const [downloads, setDownloads] = React.useState<string[]>([]);
@@ -45,6 +86,7 @@ export const Demopane: React.FC = () => {
 
     const updateDownloads = async (dir: string) => {
         const files: string[] = await readdir(resolve(dir));
+        console.log(files);
         setDownloads(files);
     };
 
@@ -68,146 +110,142 @@ export const Demopane: React.FC = () => {
         );
     };
 
-    // type invalidInputState = 'waiting' | 'none' | 'device' | 'name' | 'both';
-
-    const canSubmit = name !== '' && type !== '';
+    const canSubmit = name !== '' && device !== '';
 
     const handleDeleteDemo = async (fw: Firmware) => {
         await AppClient.deleteFirmware(fw);
         setFirmwares(await AppClient.loadSource());
     };
 
-    const devices: string[] = [
-        '',
-        'nRF9151DK',
-        'nRF9161DK',
-        'nRF9160DK',
-        'thingy91',
-        'nRF52DK',
-        'nRF53DK',
-    ];
-
-    const names: string[] = [
-        '',
-        'hello_world',
-        'lbs',
-        'peripheral_uart',
-        'power_profiling',
-        'asset_tracker',
-        'modemfirmware',
-    ];
-
-    const types: type[] = [undefined, 'Application', 'Modem', 'Network'];
-
     return (
-        <>
-            {' '}
-            <div className="tw-flex tw-gap-20">
-                <select
-                    className="tw-min-w-20"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                >
-                    {names.map(n => (
-                        <option key={n} value={n.toLowerCase()}>
-                            {n}
-                        </option>
+        <div className="tw-preflight tw-flex tw-flex-col tw-gap-4 tw-p-4 tw-text-xs">
+            <Group heading="Firmware selection" gap={4}>
+                <div className="tw-grid tw-grid-cols-3 tw-gap-4">
+                    <Dropdown
+                        label="Name"
+                        items={nameItems}
+                        selectedItem={itemFor(nameItems, name)}
+                        onSelect={item => setName(item.value)}
+                    />
+                    <Dropdown
+                        label="Device"
+                        items={deviceItems}
+                        selectedItem={itemFor(deviceItems, device)}
+                        onSelect={item => setDevice(item.value)}
+                    />
+                    <Dropdown
+                        label="Type"
+                        items={typeItems}
+                        selectedItem={itemFor(typeItems, type)}
+                        onSelect={item => setType(item.value)}
+                    />
+                </div>
+                <div className="tw-flex tw-flex-wrap tw-gap-2">
+                    <Button
+                        variant="primary"
+                        disabled={!canSubmit}
+                        onClick={() => {
+                            handleArtifactDemo({ device, type, name });
+                        }}
+                    >
+                        Test ArtifactoryClient
+                    </Button>
+                    <Button
+                        variant="primary"
+                        disabled={!canSubmit}
+                        onClick={() => {
+                            handleFirmwareDemo(
+                                { device: [device], name },
+                                type,
+                            );
+                        }}
+                    >
+                        Test FirmwareClient
+                    </Button>
+                    <Button
+                        variant="primary"
+                        disabled={!canSubmit}
+                        onClick={() => {
+                            handleApplicationDemo({ device: [device], name });
+                        }}
+                    >
+                        Test ApplicationClient
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            handleSearchDemo(device, type);
+                        }}
+                    >
+                        Test Search
+                    </Button>
+                    <Button
+                        variant="danger"
+                        onClick={() => {
+                            handleDeleteDemo({ device: [device], name });
+                        }}
+                    >
+                        Test Delete
+                    </Button>
+                </div>
+                {!canSubmit && (
+                    <p className="tw-text-gray-500">
+                        Pick a name and a type to enable the client tests.
+                    </p>
+                )}
+            </Group>
+
+            <Group heading={`Firmwares (${firmwares.length})`} gap={2}>
+                {firmwares.length === 0 && (
+                    <p className="tw-text-gray-500">No firmwares loaded yet.</p>
+                )}
+                <div className="tw-grid tw-grid-cols-2 tw-gap-2">
+                    {firmwares.map(f => (
+                        <Card key={f.file} className="tw-gap-1 tw-pt-3">
+                            <Card.Header className="tw-pb-2 tw-pt-0">
+                                <Card.Header.Title
+                                    cardTitle={f.name}
+                                    cardSubtitle={f.version}
+                                />
+                            </Card.Header>
+                            <Card.Body className="tw-gap-1">
+                                <FirmwareRow
+                                    label="Devices"
+                                    value={f.device.join(', ')}
+                                />
+                                <FirmwareRow label="Type" value={f.type} />
+                                <FirmwareRow label="File" value={f.file} />
+                            </Card.Body>
+                        </Card>
                     ))}
-                </select>
-                <select
-                    className="tw-min-w-20"
-                    value={device}
-                    onChange={e => setDevice(e.target.value)}
-                >
-                    {devices.map(d => (
-                        <option key={d} value={d.toLowerCase()}>
-                            {d}
-                        </option>
+                </div>
+            </Group>
+
+            <Group heading={`Downloads (${downloads.length})`} gap={2}>
+                {downloads.length === 0 && (
+                    <p className="tw-text-gray-500">Nothing downloaded yet.</p>
+                )}
+                <ul className="tw-m-0 tw-flex tw-list-none tw-flex-col tw-gap-1 tw-p-0">
+                    {downloads.map(f => (
+                        <li
+                            key={f}
+                            className="tw-truncate tw-bg-white tw-px-2 tw-py-1"
+                            title={f}
+                        >
+                            {f}
+                        </li>
                     ))}
-                </select>
-                <select
-                    className="tw-min-w-20"
-                    value={type}
-                    onChange={e => setType(e.target.value)}
-                >
-                    {types.map(t => (
-                        <option key={t} value={t}>
-                            {t}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <div className="tw-wrap tw-flex tw-flex-row">
-                <LocalButton
-                    onclick={() => {
-                        handleArtifactDemo({ device, type, name });
-                    }}
-                    text="Test ArtifactoryClient"
-                    enabled={canSubmit}
-                />
-                <LocalButton
-                    onclick={() => {
-                        handleFirmwareDemo({ device: [device], name }, type);
-                    }}
-                    text="Test FirmwareClient"
-                    enabled={canSubmit}
-                />
-                <LocalButton
-                    text="Test ApplicationClient"
-                    onclick={() => {
-                        handleApplicationDemo({ device: [device], name });
-                    }}
-                    enabled={canSubmit}
-                />
-                <LocalButton
-                    text="Test Search"
-                    onclick={() => {
-                        handleSearchDemo(device, type);
-                    }}
-                />
-                <LocalButton
-                    text="Test Delete"
-                    onclick={() => {
-                        handleDeleteDemo({ device: [device], name });
-                    }}
-                />
-            </div>
-            <div>
-                <h1>FIRMWARES</h1>
-                {firmwares.map(f => (
-                    <div className="tw-p-5" key={f.file}>
-                        <div className="tw-border-2 tw-border-solid tw-bg-nordicBlue-100">
-                            <p>name: {f.name}</p>
-                            <p>devices: {f.device}</p>
-                            <p>type: {f.type}</p>
-                            <p>version: {f.version}</p>
-                            <p>file: {f.file}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            <div>
-                <h1>DOWNLOADS</h1>
-                {downloads.map(f => (
-                    <div key={f}>
-                        <p>{f}</p>
-                    </div>
-                ))}
-            </div>
-        </>
+                </ul>
+            </Group>
+        </div>
     );
 };
 
-type LocalButtonProps = {
-    text: string;
-    onclick: () => void;
-    enabled?: boolean;
-};
-
-const LocalButton = ({ text, onclick, enabled = true }: LocalButtonProps) => (
-    <div className="tw-p-5">
-        <button type="button" onClick={onclick} disabled={!enabled}>
-            {text}
-        </button>
+const FirmwareRow = ({ label, value }: { label: string; value?: string }) => (
+    <div className="tw-flex tw-justify-between tw-gap-2">
+        <span className="tw-text-gray-500">{label}</span>
+        <span className="tw-truncate" title={value}>
+            {value || '—'}
+        </span>
     </div>
 );
