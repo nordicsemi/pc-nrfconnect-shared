@@ -381,7 +381,9 @@ function mapToQueryProps(
 
 export const isSameFirmware = (i: Firmware) => (j: Firmware) =>
     i.name === j.name &&
-    i.device.every(d => j.device.includes(d)) &&
+    j.device.includes(i.device[0]) &&
+    // i.device.length === j.device.length &&
+    // new Set(i.device).size === new Set([...i.device, ...j.device]).size &&
     (i.version === j.version ||
         j.version === undefined ||
         i.version === undefined);
