@@ -28,6 +28,7 @@ const nrfConnectForDesktop = z.object({
     nrfutil: nrfModules.optional(),
     nrfutilCore: semver,
     html: z.string(),
+    autoUpdate: z.boolean().optional(),
     fixedSize: z
         .object({
             width: z.number().int().positive(),

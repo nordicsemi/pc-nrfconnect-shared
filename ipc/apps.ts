@@ -40,6 +40,7 @@ interface Installed {
     html?: string;
     nrfutil?: NrfutilModules;
     nrfutilCore?: NrfutilModuleVersion;
+    autoUpdate?: boolean;
     fixedSize?: {
         width: number;
         height: number;

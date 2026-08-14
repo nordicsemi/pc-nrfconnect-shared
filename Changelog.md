@@ -7,13 +7,19 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
-## 256.0.0 - Unreleased
+## 257.0.0 - 2026-08-14
 
 ### Added
 
 - IPC for myNordic authentication: sign-in, sign-in cancellation, single sign-out,
   getting tokens and profile info, querying and subscribing to the auth
   state.
+
+## 256.0.0 - 2026-08-13
+
+### Added
+
+- `autoUpdate` field to `packageJsonApp` zod schema.
 
 ## 255.0.0 - 2026-07-17
 
