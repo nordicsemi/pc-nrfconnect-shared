@@ -11,9 +11,9 @@ every new version is a new major version.
 
 ### Added
 
-- IPC for myNordic authentication: sign-in, sign-in cancellation, single sign-out,
-  getting tokens and profile info, querying and subscribing to the auth
-  state.
+- IPC for myNordic authentication: sign-in, sign-in cancellation, single
+  sign-out, getting tokens and profile info, querying and subscribing to the
+  auth state.
 
 ## 256.0.0 - 2026-08-13
 
