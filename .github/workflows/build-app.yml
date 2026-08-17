@@ -82,6 +82,7 @@ jobs:
             - name: Detect missing doc revision history
               if: |
                   github.event_name == 'pull_request'
+                  && ! contains(github.repository, 'pc-nrfconnect-quickstart')
                   && ! contains(github.event.pull_request.labels.*.name, 'no doc revision history')
               uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
               with:
