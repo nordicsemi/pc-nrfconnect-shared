@@ -70,7 +70,6 @@ export class FirmwareClient {
     }: FirmwareClientProps = {}) {
         this.DATADIR = resolve(directory);
         this.FIRMWAREDIR = join(this.DATADIR, 'firmware');
-
         this.CLIENT = new ArtifactoryClient(server, repo, this.FIRMWAREDIR);
     }
 
@@ -300,6 +299,10 @@ export class FirmwareClient {
         await this.putSource(outFirmware);
 
         return outFirmware;
+    }
+
+    public onChecksumFail(handler: () => void) {
+        return this.CLIENT.onChecksumFail(handler);
     }
 
     public async fetchFirmware(

@@ -5,6 +5,7 @@
  */
 
 import { createHash } from 'crypto';
+import EventEmitter from 'events';
 import { mkdir, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { z } from 'zod';
@@ -50,6 +51,7 @@ export class ArtifactoryClient {
     protected SERVER: string;
     protected REPO: string;
     protected DIR: string;
+    protected eventEmitter = new EventEmitter();
 
     constructor(server: string, repo: string, dir: string) {
         this.SERVER = server;
@@ -93,6 +95,7 @@ export class ArtifactoryClient {
                 .digest('hex');
 
             isValid = checksum.toLowerCase() === actualChecksum.toLowerCase();
+            if (isValid) this.eventEmitter.emit('checksumInvalid');
         }
 
         writeFile(target, buffer);
@@ -141,6 +144,13 @@ export class ArtifactoryClient {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
         return res.json();
+    }
+
+    public onChecksumFail(handler: () => void) {
+        this.eventEmitter.on('checksumInvalid', handler);
+        return () => {
+            this.eventEmitter.removeListener('checksumInvalid', handler);
+        };
     }
 }
 
