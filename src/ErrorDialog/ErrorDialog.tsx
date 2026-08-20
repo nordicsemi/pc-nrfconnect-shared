@@ -5,7 +5,6 @@
  */
 
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -13,6 +12,7 @@ import {
     ErrorDetails,
     ErrorDialog as BaseErrorDialog,
 } from '../Dialog/Dialog';
+import Markdown from '../Markdown/Markdown';
 import {
     type ErrorMessage,
     errorResolutions as errorResolutionsSelector,
@@ -29,9 +29,7 @@ const SingleErrorMessage = ({
     error: ErrorMessage;
 }) => (
     <>
-        {/* check if we actually need https://github.com/rehypejs/rehype-external-links (as per https://github.com/remarkjs/react-markdown/blob/main/changelog.md#remove-linktarget) */}
-        {/* try to remove it first (trigger launcher error by deleting .nrfconnect-apps/source.json and opening launcher without internet) */}
-        <ReactMarkdown>{message}</ReactMarkdown>
+        <Markdown>{message}</Markdown>
         {detail != null && <ErrorDetails detail={detail} />}
     </>
 );

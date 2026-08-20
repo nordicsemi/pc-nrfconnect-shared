@@ -16,6 +16,7 @@ every new version is a new major version.
   components.
 - Added support for `cardTitleClassName` and `cardSubtitleClassName` on
   `Card.Header.Title`
+- Added `Markdown` component to wrap `ReactMarkdown` and use it more easily
 
 ### Changed
 
@@ -56,6 +57,35 @@ import { Card } from '@nordicsemiconductor/pc-nrfconnect-shared';
 
 See
 [React 19 upgrade guide](https://react.dev/blog/2024/04/25/react-19-upgrade-guide).
+
+#### Migrating `ReactMarkdown` to `Markdown`
+
+Import the new `Markdown` component from
+`@nordicsemiconductor/pc-nrfconnect-shared`, replace `ReactMarkdown` usages with
+`Markdown` and remove the `linkTarget` attribute.
+
+If the `ReactMarkdown` was wrapped in a `div` for styling, you can remove the
+`div` and move the `className` attribute onto the `Markdown` component.
+
+Example — Not migrated:
+
+```tsx
+import ReactMarkdown from 'react-markdown';
+
+return (
+    <div className="release-notes">
+        <ReactMarkdown linkTarget="_blank">**Some Markdown**</ReactMarkdown>
+    </div>
+);
+```
+
+Example — Migrated:
+
+```tsx
+import { Markdown } from '@nordicsemiconductor/pc-nrfconnect-shared';
+
+return <Markdown className="release-notes">**Some Markdown**</Markdown>;
+```
 
 ## 244.0.0 - 2026-01-22
 

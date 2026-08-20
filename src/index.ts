@@ -45,6 +45,7 @@ export type { Step } from './Stepper/Stepper';
 export { default as ExternalLink } from './Link/ExternalLink';
 export { default as FileLink } from './Link/FileLink';
 export { default as Overlay } from './Overlay/Overlay';
+export { default as Markdown } from './Markdown/Markdown';
 
 export { default as SidePanel } from './SidePanel/SidePanel';
 export { Group } from './Group/Group';

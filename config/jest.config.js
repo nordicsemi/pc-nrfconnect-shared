@@ -31,7 +31,7 @@ module.exports = (disabledMocks = []) => ({
         '^.+\\.[jt]sx?$': '@swc/jest',
     },
     transformIgnorePatterns: [
-        'node_modules/(?!(@nordicsemiconductor/pc-nrfconnect-shared|react-resize-detector)/)',
+        'node_modules/(?!(@nordicsemiconductor/pc-nrfconnect-shared|react-resize-detector|rehype-external-links|hast-util-is-element|is-absolute-url|space-separated-tokens|unist-util-visit|unist-util-visit-parents|unist-util-is)/)',
     ],
     setupFilesAfterEnv: [`${__dirname}/../test/setupTests.ts`],
     resolver: `${__dirname}/../test/jestResolver.js`,
