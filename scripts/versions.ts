@@ -10,3 +10,5 @@ export const node = '20.17.0';
 
 // Chrome from Electron 32, used in launcher >=5.1.0, <5.4.0
 export const chromeToBuildFor = '128.0.6613';
+
+export const minimalLauncherVersion = '5.2.0';

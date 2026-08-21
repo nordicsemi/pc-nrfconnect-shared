@@ -12,6 +12,9 @@ every new version is a new major version.
 ### Changed
 
 - Updated Nordic Thingy:91 X PCA number.
+- Shared now defines a minimal launcher version. It is checked, that the app has
+  the same or a higher minimal launcher version (in `engines.nrfconnect` in
+  `package.json`). Before this was just a convention.
 
 ## 263.0.0 - 2026-11-03
 

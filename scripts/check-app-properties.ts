@@ -9,12 +9,14 @@
 import { execSync } from 'child_process';
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import property from 'lodash/property';
+import semver from 'semver';
 
 import {
     type PackageJsonApp,
     parsePackageJsonApp,
 } from '../ipc/schema/packageJson';
 import { getLatestEntry } from './latest-changelog-entry';
+import { minimalLauncherVersion } from './versions';
 
 const format = (strings: string[]) =>
     strings.map(string => `\`${string}\``).join(', ');
@@ -120,6 +122,22 @@ const checkFileProperty = (packageJson: PackageJsonApp) => {
     );
 };
 
+const checkLauncherVersion = (packageJson: PackageJsonApp) => {
+    const minimalRequestedLauncher = semver.minVersion(
+        packageJson.engines.nrfconnect,
+    );
+
+    if (minimalRequestedLauncher == null) {
+        fail(
+            `This must never happen but it did with the property 'engines.nrfconnect' being '${packageJson.engines.nrfconnect}'. Fix check-app-properties.ts to handle this case.`,
+        );
+    } else if (semver.lt(minimalRequestedLauncher, minimalLauncherVersion)) {
+        fail(
+            `This version of shared requires at least launcher version ${minimalLauncherVersion} but the field 'engines.nrfconnect' in package.json requests '${packageJson.engines.nrfconnect}' which would also allow the lower ${minimalRequestedLauncher}.`,
+        );
+    }
+};
+
 const readAndCheckPackageJson = () => {
     const packageJsonResult = parsePackageJsonApp(
         readFileSync('./package.json', 'utf8'),
@@ -134,6 +152,7 @@ const readAndCheckPackageJson = () => {
 
     checkOptionalProperties(packageJson);
     checkFileProperty(packageJson);
+    checkLauncherVersion(packageJson);
 
     return packageJson;
 };
