@@ -123,7 +123,8 @@
         "zod-validation-error": "^1.5.0"
     },
     "devDependencies": {
-        "@commander-js/extra-typings": "^10.0.3"
+        "@commander-js/extra-typings": "^10.0.3",
+        "electron": "32.1.2"
     },
     "peerDependencies": {
         "electron": "32.1.2 || 43.4.0 || 43.8.6"
