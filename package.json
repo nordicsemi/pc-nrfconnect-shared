@@ -59,7 +59,6 @@
         "bootstrap": "4.6.2",
         "commander": "10.0.0",
         "date-fns": "2.29.3",
-        "electron": "^43.8.6",
         "electron-store": "8.1.0",
         "esbuild": "^0.27.2",
         "esbuild-sass-plugin": "^3.6.0",
@@ -125,6 +124,9 @@
     },
     "devDependencies": {
         "@commander-js/extra-typings": "^10.0.3"
+    },
+    "peerDependencies": {
+        "electron": "32.1.2 || 43.4.0 || 43.8.6"
     },
     "typings": "./dist/typings/src/index.d.ts",
     "prettier": "./config/prettier.config.js"
