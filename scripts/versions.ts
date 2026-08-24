@@ -12,3 +12,23 @@ export const node = '20.17.0';
 export const chromeToBuildFor = '128.0.6613';
 
 export const minimalLauncherVersion = '5.2.0';
+
+export const versionsByLauncherVersion = {
+    '>=5.1.0 <5.4.0': {
+        electron: '32.1.2',
+        chrome: '128.0.6613',
+        node: '20.17.0',
+    },
+
+    '>=5.4.0 <5.4.1': {
+        electron: '43.4.0',
+        chrome: '150.0.7871',
+        node: '24.18.1',
+    },
+
+    '>=5.4.1': {
+        electron: '43.8.6',
+        chrome: '150.0.7871',
+        node: '24.22.1',
+    },
+};
