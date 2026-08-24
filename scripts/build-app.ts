@@ -7,25 +7,38 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import semver from 'semver';
 
 import { parsePackageJsonApp } from '../ipc/schema/packageJson';
 import { build } from './esbuild-renderer';
 
-const validate = (packageJson: string) => {
+const parse = (packageJson: string) => {
     const result = parsePackageJsonApp(packageJson);
 
     if (!result.success) {
         console.log(result.error.message);
         process.exit(1);
     }
+
+    return result.data;
 };
 
 const bundle = () => {
     const packageJson = fs.readFileSync('package.json', 'utf8');
 
-    validate(packageJson);
+    const parsedPackageJson = parse(packageJson);
 
-    build({
+    const minimalRequestedLauncher = semver.minVersion(
+        parsedPackageJson.engines.nrfconnect,
+    );
+
+    if (minimalRequestedLauncher == null) {
+        throw new Error(
+            `Unable to determine a minimal requested launcher version from ${parsedPackageJson.engines.nrfconnect}.`,
+        );
+    }
+
+    build(minimalRequestedLauncher, {
         define: {
             'process.env.PACKAGE_JSON': JSON.stringify(packageJson),
         },

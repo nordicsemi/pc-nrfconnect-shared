@@ -12,9 +12,10 @@ import postCssPlugin from 'esbuild-style-plugin';
 import * as fs from 'node:fs';
 import * as module from 'node:module';
 import * as path from 'node:path';
+import { type SemVer } from 'semver';
 import tailwindcss from 'tailwindcss';
 
-import { chromeToBuildFor } from './versions';
+import { versionsForLauncherVersion } from './versions';
 
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
@@ -32,12 +33,13 @@ const tailwindConfig = () =>
 type AdditionalOptions = Partial<BuildOptions>;
 
 const options = (
+    targetLauncherVersion: string | SemVer,
     additionalOptions: AdditionalOptions,
     externalReact: boolean,
 ) =>
     ({
         format: 'iife',
-        target: `chrome${chromeToBuildFor}`,
+        target: `chrome${versionsForLauncherVersion(targetLauncherVersion).chrome}`,
         sourcemap: true,
         metafile: false,
         minify: process.argv.includes('--prod'),
@@ -120,17 +122,20 @@ const options = (
     }) satisfies BuildOptions;
 
 export const build = async (
+    targetLauncherVersion: string | SemVer,
     additionalOptions: AdditionalOptions,
     { externalReact = false } = {},
 ) => {
     if (process.argv.includes('--watch')) {
         const context = await esbuild.context(
-            options(additionalOptions, externalReact),
+            options(targetLauncherVersion, additionalOptions, externalReact),
         );
 
         await context.rebuild();
         await context.watch();
     } else {
-        return esbuild.build(options(additionalOptions, externalReact));
+        return esbuild.build(
+            options(targetLauncherVersion, additionalOptions, externalReact),
+        );
     }
 };

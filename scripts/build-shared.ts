@@ -10,6 +10,7 @@ import { build } from 'esbuild';
 import { execSync } from 'node:child_process';
 
 import { build as esbuildRenderer } from './esbuild-renderer';
+import { minimalLauncherVersion } from './versions';
 
 const main = async () => {
     console.log('Generate types');
@@ -19,7 +20,7 @@ const main = async () => {
     );
 
     console.log('Build bootstrap.css');
-    await esbuildRenderer({
+    await esbuildRenderer(minimalLauncherVersion, {
         logLevel: 'warning',
         entryPoints: ['./src/bootstrap.scss'],
         outfile: 'dist/bootstrap.css',
