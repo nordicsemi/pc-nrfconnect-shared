@@ -359,7 +359,7 @@ export class FirmwareClient {
     }
 }
 
-function mapToQueryProps(
+export function mapToQueryProps(
     fw: Firmware,
     version: 'latest' | 'all' | 'exact' = 'exact',
 ): AQueryProps {
