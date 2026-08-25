@@ -7,6 +7,7 @@
 import { existsSync } from 'fs';
 import { mkdir, readdir, readFile, unlink, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
+import { coerce } from 'semver';
 import { z } from 'zod';
 
 import { getAppDataDir } from '../utils/appDirs';
@@ -392,15 +393,13 @@ export const isSameFirmware = (i: Firmware) => (j: Firmware) =>
         i.version === undefined);
 
 export const compareVersionDesc = (n: string, m: string): number => {
-    const parse = (v: string) => v.split('.').map(p => Number.parseInt(p, 10));
-    const nList = parse(n);
-    const mList = parse(m);
+    const nsem = coerce(n);
+    const msem = coerce(m);
 
-    for (let i = 0; i < Math.max(nList.length, mList.length); i += 1) {
-        const a = nList[i] ?? 0;
-        const b = mList[i] ?? 0;
-        if (Number.isNaN(a) || Number.isNaN(b)) return n.localeCompare(m);
-        if (a !== b) return b - a;
+    if (!(nsem && msem)) {
+        console.error('Semver could not coerce version');
+        return 0;
     }
-    return 0;
+
+    return msem.compare(nsem);
 };
