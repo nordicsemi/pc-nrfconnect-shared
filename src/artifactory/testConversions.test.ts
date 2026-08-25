@@ -30,6 +30,7 @@ describe('Test query prop convertion', () => {
         name: 'modemfirmware',
         device: 'nrf9160dk',
         latest: 'true',
+        downloadable_firmware: 'true',
     };
     const testWare: Firmware = {
         name: 'modemfirmware',

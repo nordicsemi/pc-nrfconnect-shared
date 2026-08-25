@@ -266,13 +266,14 @@ export class FirmwareClient {
         type?: Firmware['type'];
         device?: string;
     }): Promise<Source[]> {
-        const props: AQueryProps = { latest: 'true' };
+        const props: AQueryProps = {
+            latest: 'true',
+            downloadable_firmware: 'true',
+        };
         if (filter.type) props.type = filter.type;
         if (filter.device) props.device = filter.device;
 
-        const res = (await this.CLIENT.searchArtifactory(props)).filter(
-            r => r.properties.type[0] !== 'Dependency',
-        );
+        const res = await this.CLIENT.searchArtifactory(props);
         const artifacts = this.mapToFirmwareFormat(res);
 
         const unique = new Map<string, Source>();
@@ -367,6 +368,7 @@ export function mapToQueryProps(
     const props: AQueryProps = {
         name: fw.name,
         device: fw.device[0],
+        downloadable_firmware: 'true',
     };
 
     switch (version) {
