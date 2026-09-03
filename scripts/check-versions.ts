@@ -6,6 +6,8 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
+import semver from 'semver';
+
 import packageJson from '../package.json';
 import { versionsByLauncherVersion } from './versions';
 
@@ -14,14 +16,14 @@ const fail = (message: string) => {
     process.exit(1);
 };
 
+const configuredVersions = Object.values(versionsByLauncherVersion).map(
+    ({ electron }) => electron,
+);
+
 const checkElectronPeerDependencies = () => {
     const peerDependencyVersions = packageJson.peerDependencies.electron
         .split('||')
         .map(version => version.trim());
-    const configuredVersions = Object.values(versionsByLauncherVersion).map(
-        ({ electron }) => electron,
-    );
-
     const missingVersions = peerDependencyVersions.filter(
         version => !configuredVersions.includes(version),
     );
@@ -39,6 +41,19 @@ const checkElectronPeerDependencies = () => {
     if (superfluousVersions.length > 0) {
         fail(
             `In 'scripts/versions.ts' there are entries for Electron version(s) ${superfluousVersions.join(', ')} but no corresponding peer dependencies in 'package.json'.`,
+        );
+    }
+};
+
+const checkElectronDevDependency = () => {
+    const lowestConfiguredVersion = configuredVersions.reduce(
+        (lowestVersion, version) =>
+            semver.lt(version, lowestVersion) ? version : lowestVersion,
+    );
+
+    if (packageJson.devDependencies.electron !== lowestConfiguredVersion) {
+        fail(
+            `The Electron development dependency in 'package.json' must be the lowest version in 'scripts/versions.ts' (${lowestConfiguredVersion}), but is ${packageJson.devDependencies.electron}.`,
         );
     }
 };
@@ -94,6 +109,7 @@ but according to the electron release it should be:
 
 const main = async () => {
     checkElectronPeerDependencies();
+    checkElectronDevDependency();
 
     const electronReleases = await (
         await fetch('https://releases.electronjs.org/releases.json')
