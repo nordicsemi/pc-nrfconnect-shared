@@ -6,11 +6,41 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
+import packageJson from '../package.json';
 import { versionsByLauncherVersion } from './versions';
 
 const fail = (message: string) => {
     console.error(message);
     process.exit(1);
+};
+
+const checkElectronPeerDependencies = () => {
+    const peerDependencyVersions = packageJson.peerDependencies.electron
+        .split('||')
+        .map(version => version.trim());
+    const configuredVersions = Object.values(versionsByLauncherVersion).map(
+        ({ electron }) => electron,
+    );
+
+    const missingVersions = peerDependencyVersions.filter(
+        version => !configuredVersions.includes(version),
+    );
+
+    if (missingVersions.length > 0) {
+        fail(
+            `In 'package.json' there are peer dependencies for Electron version(s) ${missingVersions.join(', ')} but no matching entries in 'scripts/versions.ts'.`,
+        );
+    }
+
+    const superfluousVersions = configuredVersions.filter(
+        version => !peerDependencyVersions.includes(version),
+    );
+
+    if (superfluousVersions.length > 0) {
+        fail(
+            `In 'scripts/versions.ts' there are entries for Electron version(s) ${superfluousVersions.join(', ')} but no corresponding peer dependencies in 'package.json'.`,
+        );
+    }
 };
 
 type ElectronReleases = { version: string; chrome: string; node: string }[];
@@ -42,7 +72,7 @@ const checkVersionsByLauncherEntry =
                 .join('.');
 
             fail(
-                `Version mismatch! For the launcher version range ${launcherVersionRange}, the scripts/versions.ts contains the following entry:
+                `Version mismatch! For the launcher version range ${launcherVersionRange}, 'scripts/versions.ts' contains the following entry:
 
     '${launcherVersionRange}': {
         electron: '${expectedVersions.electron}',
@@ -63,6 +93,8 @@ but according to the electron release it should be:
     };
 
 const main = async () => {
+    checkElectronPeerDependencies();
+
     const electronReleases = await (
         await fetch('https://releases.electronjs.org/releases.json')
     ).json();
