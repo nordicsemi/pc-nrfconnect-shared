@@ -233,6 +233,8 @@ class ArtifactoryClient extends Client {
             headers: { Authorization: `Bearer ${this.token}` },
         });
 
+        console.log('--> res', JSON.stringify(res));
+
         if (!res.ok) {
             throw new Error(`Failed to upload ${url}: ${res.statusText}`);
         }
@@ -590,6 +592,7 @@ const main = async () => {
 
         console.log('Done');
     } catch (error) {
+        console.error('--> full error', error);
         console.error(errorAsString(error));
         process.exitCode = 1;
     }
