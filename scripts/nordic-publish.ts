@@ -226,6 +226,7 @@ class ArtifactoryClient extends Client {
 
     upload = async (content: Buffer<ArrayBuffer>, remoteFilename: string) => {
         const url = `${this.uploadUrl}/${remoteFilename}`;
+        console.log('--> url upload', url);
         const res = await fetch(url, {
             method: 'PUT',
             body: content,
