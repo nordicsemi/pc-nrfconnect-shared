@@ -160,29 +160,32 @@ export class ArtifactoryClient {
 
     protected async safeFetch(
         url: string,
-        settings?: RequestInit,
+        settings: RequestInit = {},
     ): Promise<Response | null> {
-        let res;
+        let res: Response;
         try {
             res = await fetch(url, settings);
         } catch (e) {
-            console.error(e);
-            if (e instanceof DOMException && e.name === 'TimeoutError') {
-                this.eventEmitter.emit('serverError');
+            if (e instanceof DOMException && e.name === 'AbortError') {
                 return null;
             }
-            this.eventEmitter.emit('networkError');
+            console.error(e);
+            if (e instanceof DOMException && e.name === 'TimeoutError') {
+                this.eventEmitter.emit('serverError', { url });
+            } else {
+                this.eventEmitter.emit('networkError', { url });
+            }
             return null;
         }
+
         if (!res.ok) {
-            this.eventEmitter.emit('httpError');
             console.error(`HTTP ${res.status}: ${url}`);
+            this.eventEmitter.emit('httpError', { url, status: res.status });
             return null;
         }
 
         return res;
     }
-
     public onAnyNetworkFail(handler: () => void) {
         this.eventEmitter.on('networkError', handler);
         this.eventEmitter.on('serverError', handler);
