@@ -21,7 +21,8 @@ import {
 type ApplicationClientProps = {
     dataDirectory?: string;
     bundledDirectory?: string;
-    server?: string;
+    primaryServer?: string;
+    secondaryServer?: string;
     repo?: string;
 };
 
@@ -31,10 +32,16 @@ export class ApplicationClient extends FirmwareClient {
     constructor({
         dataDirectory = getAppDataDir(),
         bundledDirectory = join(getAppDir(), 'resources', 'firmware'),
-        server = 'files.nordicsemi.com',
+        primaryServer = 'files.nordicsemi.com',
+        secondaryServer = 'files.nordicsemi.cn',
         repo = 'swtools',
     }: ApplicationClientProps = {}) {
-        super({ server, repo, directory: dataDirectory });
+        super({
+            primaryServer,
+            secondaryServer,
+            repo,
+            directory: dataDirectory,
+        });
         this.BUNDLEDDIR = resolve(bundledDirectory);
     }
 
