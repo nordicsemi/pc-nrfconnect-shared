@@ -53,7 +53,8 @@ export type Firmware = z.infer<typeof FirmwareScheme>;
 export type Source = z.infer<typeof SourceScheme>;
 
 export type FirmwareClientProps = {
-    server?: string;
+    primaryServer?: string;
+    secondaryServer?: string;
     repo?: string;
     directory?: string;
 };
@@ -63,15 +64,25 @@ export class FirmwareClient {
     protected CLIENT: ArtifactoryClient;
     protected FIRMWAREDIR: string;
     protected VALIDATED?: Promise<void>;
+    protected PRIMARYSERVER: string;
+    protected SECONDARYSERVER: string;
 
     constructor({
-        server = 'files.nordicsemi.com',
+        primaryServer = 'files.nordicsemi.com',
+        secondaryServer = 'files.nordicsemi.cn',
         repo = 'swtools',
         directory = getAppDataDir(),
     }: FirmwareClientProps = {}) {
+        this.PRIMARYSERVER = primaryServer;
+        this.SECONDARYSERVER = secondaryServer;
+
         this.DATADIR = resolve(directory);
         this.FIRMWAREDIR = join(this.DATADIR, 'firmware');
-        this.CLIENT = new ArtifactoryClient(server, repo, this.FIRMWAREDIR);
+        this.CLIENT = new ArtifactoryClient(
+            primaryServer,
+            repo,
+            this.FIRMWAREDIR,
+        );
     }
 
     protected async saveSource(source: Source[]): Promise<void> {
@@ -358,6 +369,13 @@ export class FirmwareClient {
             }
             return outFirmware;
         });
+    }
+
+    public setServerPrimary() {
+        this.CLIENT.setServer(this.PRIMARYSERVER);
+    }
+    public setServerSecondary() {
+        this.CLIENT.setServer(this.SECONDARYSERVER);
     }
 }
 
