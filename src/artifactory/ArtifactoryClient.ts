@@ -152,6 +152,14 @@ export class ArtifactoryClient {
             this.eventEmitter.removeListener('checksumInvalid', handler);
         };
     }
+
+    public setServer(server: string): void {
+        this.SERVER = server;
+    }
+
+    public getServer(): string {
+        return this.SERVER;
+    }
 }
 
 export function filenameFromUrl(url: string): string {
