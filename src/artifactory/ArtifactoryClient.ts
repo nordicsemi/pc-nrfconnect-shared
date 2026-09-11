@@ -78,16 +78,21 @@ export class ArtifactoryClient {
         url: string,
         checksum?: string,
         algorithm: 'md5' | 'sha1' | 'sha256' = 'sha256',
-    ): Promise<boolean | undefined> {
+    ): Promise<boolean> {
         const filename = filenameFromUrl(url);
 
         const dir = resolve(this.DIR);
         const target = join(dir, filename);
 
         await mkdir(dir, { recursive: true });
-        const buffer = Buffer.from(await (await fetch(url)).arrayBuffer());
 
-        let isValid: boolean | undefined;
+        const res = await this.safeFetch(url);
+
+        if (!res) return false;
+
+        const buffer = Buffer.from(await res.arrayBuffer());
+
+        let isValid: boolean = true;
 
         if (checksum) {
             const actualChecksum = createHash(algorithm)
@@ -121,7 +126,7 @@ export class ArtifactoryClient {
         authentication?: string,
     ): Promise<AResponse> {
         const url = this.queryUrl(props);
-        const res = await fetch(url, {
+        const res = await this.safeFetch(url, {
             method: 'GET',
             headers: {
                 Authorization: authentication || '',
@@ -129,11 +134,10 @@ export class ArtifactoryClient {
             },
         });
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+        if (!res) return [];
 
         const resJson = await res.json();
 
-        console.log(resJson);
         const out: AResponse = AResponseScheme.parse(resJson.results);
 
         return out;
@@ -141,16 +145,9 @@ export class ArtifactoryClient {
 
     public async downloadJsonFromPath(path: string): Promise<unknown> {
         const url = this.downloadUrl(path);
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+        const res = await this.safeFetch(url);
+        if (!res) return;
         return res.json();
-    }
-
-    public onChecksumFail(handler: () => void) {
-        this.eventEmitter.on('checksumInvalid', handler);
-        return () => {
-            this.eventEmitter.removeListener('checksumInvalid', handler);
-        };
     }
 
     public setServer(server: string): void {
@@ -159,6 +156,65 @@ export class ArtifactoryClient {
 
     public getServer(): string {
         return this.SERVER;
+    }
+
+    protected async safeFetch(
+        url: string,
+        settings?: RequestInit,
+    ): Promise<Response | null> {
+        let res;
+        try {
+            res = await fetch(url, settings);
+        } catch (e) {
+            console.error(e);
+            if (e instanceof DOMException && e.name === 'TimeoutError') {
+                this.eventEmitter.emit('serverError');
+                return null;
+            }
+            this.eventEmitter.emit('networkError');
+            return null;
+        }
+        if (!res.ok) {
+            this.eventEmitter.emit('httpError');
+            console.error(`HTTP ${res.status}: ${url}`);
+            return null;
+        }
+
+        return res;
+    }
+
+    public onAnyNetworkFail(handler: () => void) {
+        this.eventEmitter.on('networkError', handler);
+        this.eventEmitter.on('serverError', handler);
+        this.eventEmitter.on('httpError', handler);
+        return () => {
+            this.eventEmitter.removeListener('networkError', handler);
+            this.eventEmitter.removeListener('serverError', handler);
+            this.eventEmitter.removeListener('httpError', handler);
+        };
+    }
+
+    public onUpstreamFail(handler: () => void) {
+        this.eventEmitter.on('serverError', handler);
+        this.eventEmitter.on('httpError', handler);
+        return () => {
+            this.eventEmitter.removeListener('serverError', handler);
+            this.eventEmitter.removeListener('httpError', handler);
+        };
+    }
+
+    public onNetworkFail(handler: () => void) {
+        this.eventEmitter.on('networkError', handler);
+        return () => {
+            this.eventEmitter.removeListener('networkError', handler);
+        };
+    }
+
+    public onChecksumFail(handler: () => void) {
+        this.eventEmitter.on('checksumInvalid', handler);
+        return () => {
+            this.eventEmitter.removeListener('checksumInvalid', handler);
+        };
     }
 }
 
