@@ -7,6 +7,12 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
+## 260.0.0 - 2026-09-11
+
+### Fixed
+
+- `.at()` was missing on Array type.
+
 ## 259.0.0 - 2026-08-26
 
 ### Changed
