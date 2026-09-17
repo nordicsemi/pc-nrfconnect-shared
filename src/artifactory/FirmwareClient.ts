@@ -318,6 +318,18 @@ export class FirmwareClient {
         return this.CLIENT.onChecksumFail(handler);
     }
 
+    public onAnyNetworkFail(handler: () => void) {
+        return this.CLIENT.onAnyNetworkFail(handler);
+    }
+
+    public onUpstreamFail(handler: () => void) {
+        return this.CLIENT.onUpstreamFail(handler);
+    }
+
+    public onNetworkFail(handler: () => void) {
+        return this.CLIENT.onNetworkFail(handler);
+    }
+
     public async fetchFirmware(
         fw: Firmware,
         latest?: boolean,
