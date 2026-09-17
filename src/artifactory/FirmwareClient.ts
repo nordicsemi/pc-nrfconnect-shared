@@ -190,8 +190,9 @@ export class FirmwareClient {
         const upstreamFirmware = await this.fetchFirmware(fw);
 
         if (
-            cachedFirmware &&
-            upstreamFirmware.version === cachedFirmware.version
+            !upstreamFirmware ||
+            (cachedFirmware &&
+                upstreamFirmware.version === cachedFirmware.version)
         ) {
             console.log(`Returning firmware ${cachedFirmware.name} from cache`);
             return cachedFirmware;
@@ -285,7 +286,13 @@ export class FirmwareClient {
         if (filter.device) props.device = filter.device;
 
         const res = await this.CLIENT.searchArtifactory(props);
-        const artifacts = this.mapToFirmwareFormat(res);
+        let artifacts: Source[];
+
+        if (res.length === 0) {
+            artifacts = await this.getSource();
+        } else {
+            artifacts = this.mapToFirmwareFormat(res);
+        }
 
         const unique = new Map<string, Source>();
         artifacts.forEach(a => unique.set(`${a.file}:${a.type}`, a));
@@ -333,7 +340,7 @@ export class FirmwareClient {
     public async fetchFirmware(
         fw: Firmware,
         latest?: boolean,
-    ): Promise<Source> {
+    ): Promise<Source | null> {
         const version = () => {
             if (latest) return 'latest';
         };
@@ -342,7 +349,8 @@ export class FirmwareClient {
             mapToQueryProps(fw, version()),
         );
         if (res.length === 0) {
-            throw new Error(`No artifact found for ${fw.name} (${fw.type})`);
+            console.error(`No artifact found for ${fw.name} (${fw.type})`);
+            return null;
         }
         if (res.length > 1) {
             console.error(

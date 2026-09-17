@@ -93,15 +93,15 @@ export class ApplicationClient extends FirmwareClient {
 
         const cached = newest(await this.loadSource());
         const bundled = newest(await this.loadIndex());
+        const upstream = await this.fetchFirmware(fw, latest);
 
-        if (!latest) {
+        if (!latest || !upstream) {
             if (cached) {
                 console.log(`Returning firmware ${cached.name} from cache`);
                 return cached;
             }
             if (bundled) return this.copyBundledFirmware(bundled);
         } else {
-            const upstream = await this.fetchFirmware(fw, latest);
             if (cached?.version === upstream.version) {
                 console.log(`Returning firmware ${cached.name} from cache`);
                 return cached;
@@ -115,7 +115,9 @@ export class ApplicationClient extends FirmwareClient {
             return this.downloadFirmware(upstream);
         }
 
-        const upstream = await this.fetchFirmware(fw, latest);
+        if (!upstream) {
+            throw new Error('No network, and no matching local firmware');
+        }
         console.log(`Downloading firmware ${upstream.name} from artifactory`);
         return this.downloadFirmware(upstream);
     }
