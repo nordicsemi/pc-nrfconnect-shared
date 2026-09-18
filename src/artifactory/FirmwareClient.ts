@@ -151,7 +151,7 @@ export class FirmwareClient {
     protected async searchFirmware(
         fw: Firmware,
         allVersions?: boolean,
-    ): Promise<AResponse> {
+    ): Promise<AResponse | null> {
         const version = () => {
             if (allVersions) return 'all';
         };
@@ -159,6 +159,7 @@ export class FirmwareClient {
         const diffProps: AQueryProps[] = fw.device.map(d =>
             mapToQueryProps({ ...fw, device: [d] }, version()),
         );
+
         const deviceSearches: AResponse[] = await Promise.all(
             diffProps.map(props => this.CLIENT.searchArtifactory(props)),
         );
@@ -174,6 +175,8 @@ export class FirmwareClient {
                 }
             }),
         );
+
+        if (out.length === 0) return null;
 
         return out;
     }
@@ -268,9 +271,18 @@ export class FirmwareClient {
 
     public async searchVersions(fw: Firmware): Promise<string[]> {
         const alternatives = await this.searchFirmware(fw, true);
+        if (alternatives)
+            return [
+                ...new Set(alternatives.map(a => a.properties.version[0])),
+            ].sort(compareVersionDesc);
 
+        const cached = await this.loadSource();
         return [
-            ...new Set(alternatives.map(a => a.properties.version[0])),
+            ...new Set(
+                cached
+                    .filter(isSameFirmware({ ...fw, version: undefined }))
+                    .map(s => s.version),
+            ),
         ].sort(compareVersionDesc);
     }
 
