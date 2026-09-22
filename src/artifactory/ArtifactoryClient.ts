@@ -55,14 +55,12 @@ export class ArtifactoryClient {
     protected TOKEN: string;
 
     constructor(server: string, repo: string, dir: string, token: string = '') {
-        this.SERVER = server;
-        this.REPO = encodeURIComponent(repo);
         this.DIR = resolve(dir);
         mkdir(this.DIR, { recursive: true });
-        this.TOKEN = token;
-    }
 
-    public setToken(token: string): void {
+        this.SERVER = server;
+        this.REPO = encodeURIComponent(repo);
+
         this.TOKEN = token;
     }
 
@@ -149,14 +147,6 @@ export class ArtifactoryClient {
         return res.json();
     }
 
-    public setServer(server: string): void {
-        this.SERVER = server;
-    }
-
-    public getServer(): string {
-        return this.SERVER;
-    }
-
     protected async safeFetch(
         url: string,
         settings: RequestInit = {},
@@ -223,6 +213,35 @@ export class ArtifactoryClient {
         return () => {
             this.eventEmitter.removeListener('checksumInvalid', handler);
         };
+    }
+
+    public setServer(server: string): void {
+        this.SERVER = server;
+    }
+
+    public getServer(): string {
+        return this.SERVER;
+    }
+
+    public setRepo(repo: string): void {
+        this.REPO = encodeURIComponent(repo);
+    }
+
+    public getRepo(): string {
+        return this.REPO;
+    }
+
+    public setDir(dir: string): void {
+        this.DIR = resolve(dir);
+        mkdir(this.DIR);
+    }
+
+    public getDir(): string {
+        return this.DIR;
+    }
+
+    public setToken(token: string): void {
+        this.TOKEN = token;
     }
 }
 
