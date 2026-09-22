@@ -10,6 +10,7 @@ import { join, resolve } from 'path';
 import { coerce } from 'semver';
 import { z } from 'zod';
 
+import logger from '../logging';
 import { getAppDataDir } from '../utils/appDirs';
 import {
     type AQueryProps,
@@ -116,7 +117,7 @@ export class FirmwareClient {
                 ),
             );
             if ((e as NodeJS.ErrnoException).code === 'ENOENT') return [];
-            console.error(
+            logger.error(
                 `Corrupt firmware cache, returning empty: ${String(e)}`,
             );
             return [];
@@ -200,7 +201,7 @@ export class FirmwareClient {
             (cachedFirmware &&
                 upstreamFirmware.version === cachedFirmware.version)
         ) {
-            console.log(`Returning firmware ${cachedFirmware.name} from cache`);
+            logger.info(`Returning firmware ${cachedFirmware.name} from cache`);
             return cachedFirmware;
         }
 
@@ -212,11 +213,11 @@ export class FirmwareClient {
             cachedFirmware2 &&
             upstreamFirmware.version === cachedFirmware2.version
         ) {
-            console.log(`Returning firmware ${cachedFirmware.name} from cache`);
+            logger.info(`Returning firmware ${cachedFirmware.name} from cache`);
             return cachedFirmware2;
         }
 
-        console.log(
+        logger.info(
             `Downloading firmware ${upstreamFirmware.name} from artifactory`,
         );
 
@@ -251,13 +252,13 @@ export class FirmwareClient {
         await Promise.all(
             toRemove.map(async f => {
                 if (f.file === undefined) {
-                    console.error(
+                    logger.warn(
                         `Failed to delete firmware ${JSON.stringify(f)}: no file specified in source`,
                     );
                     return;
                 }
                 await unlink(f.file).catch(err => {
-                    console.warn(`Failed to delete file ${f.file}:`, err);
+                    logger.error(`Failed to delete file ${f.file}:`, err);
                 });
             }),
         );
@@ -267,7 +268,13 @@ export class FirmwareClient {
 
     public async clearCache(): Promise<void> {
         const source = await this.loadSource();
-        await Promise.all(source.map(f => unlink(f.file).catch(() => {})));
+        await Promise.all(
+            source.map(f =>
+                unlink(f.file).catch(err => {
+                    logger.error(`Failed to delete file ${f.file}:`, err);
+                }),
+            ),
+        );
 
         await this.saveSource([]);
     }
@@ -321,7 +328,7 @@ export class FirmwareClient {
         );
 
         if (!valid) {
-            console.error('invalid checksum'); // TODO add proper error handling
+            logger.error('invalid checksum'); // TODO add proper error handling
         }
 
         const path = filenameFromUrl(f.file);
@@ -364,11 +371,11 @@ export class FirmwareClient {
             mapToQueryProps(fw, version()),
         );
         if (res.length === 0) {
-            console.error(`No artifact found for ${fw.name} (${fw.type})`);
+            logger.error(`No artifact found for ${fw.name} (${fw.type})`);
             return null;
         }
         if (res.length > 1) {
-            console.error(
+            logger.warn(
                 `Multiple firmwares found for query ${JSON.stringify(fw)}, trying first index`,
             );
         }
@@ -464,7 +471,7 @@ export const compareVersionDesc = (n: string, m: string): number => {
     const msem = coerce(m);
 
     if (!(nsem && msem)) {
-        console.error('Semver could not coerce version');
+        logger.error('Semver could not coerce version');
         return 0;
     }
 

@@ -8,6 +8,7 @@ import { copyFile, mkdir, readFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { z } from 'zod';
 
+import logger from '../logging';
 import { getAppDataDir, getAppDir } from '../utils/appDirs';
 import {
     compareVersionDesc,
@@ -53,7 +54,7 @@ export class ApplicationClient extends FirmwareClient {
             );
             return z.array(SourceScheme).parse(JSON.parse(content));
         } catch (e) {
-            console.error(`Error loading indexed firmwares: ${String(e)}`);
+            logger.error(`Error loading indexed firmwares: ${String(e)}`);
             return [];
         }
     }
@@ -97,19 +98,19 @@ export class ApplicationClient extends FirmwareClient {
 
         if (!latest || !upstream) {
             if (cached) {
-                console.log(`Returning firmware ${cached.name} from cache`);
+                logger.info(`Returning firmware ${cached.name} from cache`);
                 return cached;
             }
             if (bundled) return this.copyBundledFirmware(bundled);
         } else {
             if (cached?.version === upstream.version) {
-                console.log(`Returning firmware ${cached.name} from cache`);
+                logger.info(`Returning firmware ${cached.name} from cache`);
                 return cached;
             }
             if (bundled?.version === upstream.version) {
                 return this.copyBundledFirmware(bundled);
             }
-            console.log(
+            logger.info(
                 `Downloading firmware ${upstream.name} from artifactory`,
             );
             return this.downloadFirmware(upstream);
@@ -118,7 +119,7 @@ export class ApplicationClient extends FirmwareClient {
         if (!upstream) {
             throw new Error('No network, and no matching local firmware');
         }
-        console.log(`Downloading firmware ${upstream.name} from artifactory`);
+        logger.info(`Downloading firmware ${upstream.name} from artifactory`);
         return this.downloadFirmware(upstream);
     }
 
@@ -131,7 +132,7 @@ export class ApplicationClient extends FirmwareClient {
         const outFirmware: Source = { ...bundled, file: destination };
         await this.putSource(outFirmware);
 
-        console.log(`Copying firmware ${outFirmware.name} from bundle`);
+        logger.info(`Copying firmware ${outFirmware.name} from bundle`);
         return outFirmware;
     }
 }

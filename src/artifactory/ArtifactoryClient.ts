@@ -10,6 +10,8 @@ import { mkdir, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { z } from 'zod';
 
+import logger from '../logging';
+
 export type AQueryProps = {
     [prop: string]: string;
 };
@@ -164,7 +166,7 @@ export class ArtifactoryClient {
             if (e instanceof DOMException && e.name === 'AbortError') {
                 return null;
             }
-            console.error(e);
+            logger.error(e);
             if (e instanceof DOMException && e.name === 'TimeoutError') {
                 this.eventEmitter.emit('serverError', { url });
             } else {
@@ -174,7 +176,7 @@ export class ArtifactoryClient {
         }
 
         if (!res.ok) {
-            console.error(`HTTP ${res.status}: ${url}`);
+            logger.error(`HTTP ${res.status}: ${url}`);
             this.eventEmitter.emit('httpError', { url, status: res.status });
             return null;
         }

@@ -86,7 +86,6 @@ export const Demopane: React.FC = () => {
 
     const updateDownloads = async (dir: string) => {
         const files: string[] = await readdir(resolve(dir));
-        console.log(files);
         setDownloads(files);
     };
 
