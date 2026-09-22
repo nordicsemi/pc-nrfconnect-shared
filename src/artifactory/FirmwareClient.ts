@@ -57,6 +57,7 @@ export type FirmwareClientProps = {
     secondaryServer?: string;
     repo?: string;
     directory?: string;
+    token?: string;
 };
 
 export class FirmwareClient {
@@ -72,6 +73,7 @@ export class FirmwareClient {
         secondaryServer = 'files.nordicsemi.cn',
         repo = 'swtools',
         directory = getAppDataDir(),
+        token = '',
     }: FirmwareClientProps = {}) {
         this.PRIMARYSERVER = primaryServer;
         this.SECONDARYSERVER = secondaryServer;
@@ -82,6 +84,7 @@ export class FirmwareClient {
             primaryServer,
             repo,
             this.FIRMWAREDIR,
+            token,
         );
     }
 
@@ -408,6 +411,18 @@ export class FirmwareClient {
     }
     public setServerSecondary() {
         this.CLIENT.setServer(this.SECONDARYSERVER);
+    }
+
+    public setRepo(repo: string): void {
+        this.CLIENT.setRepo(repo);
+    }
+
+    public getRepo(): string {
+        return this.CLIENT.getRepo();
+    }
+
+    public setToken(token: string): void {
+        this.CLIENT.setToken(token);
     }
 }
 
