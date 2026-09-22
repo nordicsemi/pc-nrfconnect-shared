@@ -5,13 +5,13 @@
  */
 import React from 'react';
 import { readdir } from 'fs/promises';
+import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 
 import Button from '../Button/Button';
 import Card from '../Card/Card';
 import Dropdown, { type DropdownItem } from '../Dropdown/Dropdown';
 import { Group } from '../Group/Group';
-import { getAppDataDir } from '../utils/appDirs';
 import { ApplicationClient } from './ApplicationClient';
 import {
     type AQueryProps,
@@ -21,7 +21,7 @@ import {
 import { type Firmware } from './FirmwareClient';
 
 const NordicURL = 'files.nordicsemi.com';
-const demoPath = join(getAppDataDir(), 'demo');
+const demoPath = join(tmpdir(), 'pc-nrfconnect-artifactory-demo');
 
 type type = 'Modem' | 'Application' | 'Network' | undefined;
 
@@ -80,8 +80,8 @@ export const Demopane: React.FC = () => {
 
     const handleArtifactDemo = async (props: AQueryProps) => {
         const res: AResponse = await ArtClient.searchArtifactory(props);
-        ArtClient.downloadArtifactFromPath(res[0].path);
-        updateDownloads(join(demoPath, 'downloads'));
+        await ArtClient.downloadArtifactFromPath(res[0].path);
+        await updateDownloads(join(demoPath, 'downloads'));
     };
 
     const updateDownloads = async (dir: string) => {

@@ -57,7 +57,8 @@ export class ArtifactoryClient {
     constructor(server: string, repo: string, dir: string, token: string = '') {
         this.SERVER = server;
         this.REPO = encodeURIComponent(repo);
-        this.DIR = dir;
+        this.DIR = resolve(dir);
+        mkdir(this.DIR, { recursive: true });
         this.TOKEN = token;
     }
 
@@ -87,10 +88,7 @@ export class ArtifactoryClient {
     ): Promise<boolean> {
         const filename = filenameFromUrl(url);
 
-        const dir = resolve(this.DIR);
-        const target = join(dir, filename);
-
-        await mkdir(dir, { recursive: true });
+        const target = join(this.DIR, filename);
 
         const res = await this.safeFetch(url);
 
