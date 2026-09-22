@@ -52,11 +52,17 @@ export class ArtifactoryClient {
     protected REPO: string;
     protected DIR: string;
     protected eventEmitter = new EventEmitter();
+    protected TOKEN: string;
 
-    constructor(server: string, repo: string, dir: string) {
+    constructor(server: string, repo: string, dir: string, token: string = '') {
         this.SERVER = server;
         this.REPO = encodeURIComponent(repo);
         this.DIR = dir;
+        this.TOKEN = token;
+    }
+
+    public setToken(token: string): void {
+        this.TOKEN = token;
     }
 
     public downloadUrl = (path: string): string =>
@@ -121,15 +127,10 @@ export class ArtifactoryClient {
         return `https://${this.SERVER}/artifactory/api/search/prop?${params}`;
     }
 
-    public async searchArtifactory(
-        props: AQueryProps,
-        authentication?: string,
-    ): Promise<AResponse> {
+    public async searchArtifactory(props: AQueryProps): Promise<AResponse> {
         const url = this.queryUrl(props);
         const res = await this.safeFetch(url, {
-            method: 'GET',
             headers: {
-                Authorization: authentication || '',
                 'X-Result-Detail': 'info, properties',
             },
         });
@@ -163,8 +164,14 @@ export class ArtifactoryClient {
         settings: RequestInit = {},
     ): Promise<Response | null> {
         let res: Response;
+        const headers = new Headers(settings.headers);
+        headers.set('Authorization', this.TOKEN);
+
         try {
-            res = await fetch(url, settings);
+            res = await fetch(url, {
+                ...settings,
+                headers,
+            });
         } catch (e) {
             if (e instanceof DOMException && e.name === 'AbortError') {
                 return null;
