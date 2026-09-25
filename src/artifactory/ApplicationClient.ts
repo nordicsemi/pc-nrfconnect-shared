@@ -64,18 +64,31 @@ export class ApplicationClient extends FirmwareClient {
         await Promise.all(index.map(fw => this.getIndexedFirmwareWithDeps(fw)));
     }
 
-    public async getIndexedFirmwareWithDeps(fw: Firmware): Promise<Source[]> {
-        const fetchedFW: Source = await this.getIndexedFirmware(fw, true);
+    public async getIndexedFirmwareWithDeps(
+        fw: Firmware,
+    ): Promise<Source[] | null> {
+        const fetchedFW: Source | null = await this.getIndexedFirmware(
+            fw,
+            true,
+        );
+        if (!fetchedFW) {
+            return null;
+        }
 
         let all: Source[] = [fetchedFW];
         if (fetchedFW.dependencies) {
             all = [
                 fetchedFW,
-                ...(await Promise.all(
-                    fetchedFW.dependencies.map(f =>
-                        this.getIndexedFirmware({ ...f, device: fw.device }),
-                    ),
-                )),
+                ...(
+                    await Promise.all(
+                        fetchedFW.dependencies.map(f =>
+                            this.getIndexedFirmware({
+                                ...f,
+                                device: fw.device,
+                            }),
+                        ),
+                    )
+                ).filter(f => f !== null),
             ];
         }
 
@@ -85,7 +98,7 @@ export class ApplicationClient extends FirmwareClient {
     public async getIndexedFirmware(
         fw: Firmware,
         latest?: boolean,
-    ): Promise<Source> {
+    ): Promise<Source | null> {
         const match = isSameFirmware(fw);
         const newest = (sources: Source[]) =>
             sources

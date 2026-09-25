@@ -6,7 +6,7 @@
 
 import { createHash } from 'crypto';
 import EventEmitter from 'events';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, unlink, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { z } from 'zod';
 
@@ -73,7 +73,7 @@ export class ArtifactoryClient {
         path: string,
         checksum?: string,
         algorithm: 'md5' | 'sha1' | 'sha256' = 'sha256',
-    ): Promise<boolean | undefined> {
+    ): Promise<boolean | null> {
         return await this.downloadArtifactFromUrl(
             this.downloadUrl(path),
             checksum,
@@ -85,14 +85,14 @@ export class ArtifactoryClient {
         url: string,
         checksum?: string,
         algorithm: 'md5' | 'sha1' | 'sha256' = 'sha256',
-    ): Promise<boolean> {
+    ): Promise<boolean | null> {
         const filename = filenameFromUrl(url);
 
         const target = join(this.DIR, filename);
 
         const res = await this.safeFetch(url);
 
-        if (!res) return false;
+        if (!res) return null;
 
         const buffer = Buffer.from(await res.arrayBuffer());
 
@@ -104,7 +104,10 @@ export class ArtifactoryClient {
                 .digest('hex');
 
             isValid = checksum.toLowerCase() === actualChecksum.toLowerCase();
-            if (isValid) this.eventEmitter.emit('checksumInvalid');
+            if (isValid) {
+                this.eventEmitter.emit('checksumInvalid');
+                unlink(target);
+            }
         }
 
         writeFile(target, buffer);

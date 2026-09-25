@@ -185,7 +185,7 @@ export class FirmwareClient {
         return out;
     }
 
-    public async getFirmware(fw: Firmware): Promise<Source> {
+    public async getFirmware(fw: Firmware): Promise<Source | null> {
         const cachedSource = await this.loadSource();
 
         const cachedFirmware = cachedSource
@@ -224,18 +224,23 @@ export class FirmwareClient {
         return await this.downloadFirmware(upstreamFirmware);
     }
 
-    public async getFirmwareWithDeps(fw: Firmware): Promise<Source[]> {
-        const fetchedFW: Source = await this.getFirmware(fw);
+    public async getFirmwareWithDeps(fw: Firmware): Promise<Source[] | null> {
+        const fetchedFW: Source | null = await this.getFirmware(fw);
+        if (!fetchedFW) {
+            return null;
+        }
 
         let all: Source[] = [fetchedFW];
         if (fetchedFW.dependencies) {
             all = [
                 fetchedFW,
-                ...(await Promise.all(
-                    fetchedFW.dependencies.map(f =>
-                        this.getFirmware({ ...f, device: fw.device }),
-                    ),
-                )),
+                ...(
+                    await Promise.all(
+                        fetchedFW.dependencies.map(f =>
+                            this.getFirmware({ ...f, device: fw.device }),
+                        ),
+                    )
+                ).filter(f => f !== null),
             ];
         }
 
@@ -321,14 +326,19 @@ export class FirmwareClient {
         return [...unique.values()];
     }
 
-    protected async downloadFirmware(f: Source): Promise<Source> {
+    protected async downloadFirmware(f: Source): Promise<Source | null> {
         const valid = await this.CLIENT.downloadArtifactFromUrl(
             f.file,
             f.checksum,
         );
 
-        if (!valid) {
-            logger.error('invalid checksum'); // TODO add proper error handling
+        if (valid === null) {
+            logger.error('No download recieved');
+            return null;
+        }
+
+        if (valid === false) {
+            logger.warn('Invalid checksum');
         }
 
         const path = filenameFromUrl(f.file);

@@ -96,7 +96,9 @@ export const Demopane: React.FC = () => {
     };
 
     const handleApplicationDemo = async (fw: Firmware) => {
-        setFirmwares(await AppClient.getIndexedFirmwareWithDeps(fw));
+        const firmwaredownloads: Firmware[] | null =
+            await AppClient.getIndexedFirmwareWithDeps(fw);
+        if (firmwaredownloads) setFirmwares(firmwaredownloads);
     };
 
     const handleSearchDemo = async (indevice: string, intype: string) => {
