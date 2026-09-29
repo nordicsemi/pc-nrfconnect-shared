@@ -6,7 +6,7 @@
 
 import { createHash } from 'crypto';
 import EventEmitter from 'events';
-import { mkdir, unlink, writeFile } from 'fs/promises';
+import { mkdir, writeFile } from 'fs/promises';
 import { join, resolve } from 'path';
 import { z } from 'zod';
 
@@ -55,10 +55,11 @@ export class ArtifactoryClient {
     protected dir: string;
     protected eventEmitter = new EventEmitter();
     protected token: string;
+    protected dirReady: Promise<void>;
 
     constructor(server: string, repo: string, dir: string, token: string = '') {
         this.dir = resolve(dir);
-        this.createDir();
+        this.dirReady = this.createDir();
 
         this.server = server;
         this.repo = repo;
@@ -66,8 +67,8 @@ export class ArtifactoryClient {
         this.token = token;
     }
 
-    protected createDir() {
-        mkdir(this.dir, { recursive: true }).catch(e =>
+    protected async createDir(): Promise<void> {
+        await mkdir(this.dir, { recursive: true }).catch(e =>
             logger.error(`Failed to create directory ${this.dir}: ${e}`),
         );
     }
@@ -110,13 +111,14 @@ export class ArtifactoryClient {
                 .digest('hex');
 
             isValid = checksum.toLowerCase() === actualChecksum.toLowerCase();
-            if (isValid) {
+            if (!isValid) {
                 this.eventEmitter.emit('checksumInvalid');
-                unlink(target);
+                return false;
             }
         }
 
-        writeFile(target, buffer);
+        await this.dirReady;
+        await writeFile(target, buffer);
 
         return isValid;
     }
@@ -244,7 +246,7 @@ export class ArtifactoryClient {
 
     public setDir(dir: string): void {
         this.dir = resolve(dir);
-        this.createDir();
+        this.dirReady = this.createDir();
     }
 
     public getDir(): string {
