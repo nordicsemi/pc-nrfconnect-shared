@@ -50,24 +50,30 @@ const AResponseScheme = z.array(
 export type AResponse = z.infer<typeof AResponseScheme>;
 
 export class ArtifactoryClient {
-    protected SERVER: string;
-    protected REPO: string;
-    protected DIR: string;
+    protected server: string;
+    protected repo: string;
+    protected dir: string;
     protected eventEmitter = new EventEmitter();
-    protected TOKEN: string;
+    protected token: string;
 
     constructor(server: string, repo: string, dir: string, token: string = '') {
-        this.DIR = resolve(dir);
-        mkdir(this.DIR, { recursive: true });
+        this.dir = resolve(dir);
+        this.createDir();
 
-        this.SERVER = server;
-        this.REPO = encodeURIComponent(repo);
+        this.server = server;
+        this.repo = repo;
 
-        this.TOKEN = token;
+        this.token = token;
+    }
+
+    protected createDir() {
+        mkdir(this.dir, { recursive: true }).catch(e =>
+            logger.error(`Failed to create directory ${this.dir}: ${e}`),
+        );
     }
 
     public downloadUrl = (path: string): string =>
-        `https://${this.SERVER}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${this.REPO}&path=${encodeURIComponent(path)}`;
+        `https://${this.server}/ui/api/v1/download?isNativeBrowsing=false&repoKey=${encodeURIComponent(this.repo)}&path=${encodeURIComponent(path)}`;
 
     public async downloadArtifactFromPath(
         path: string,
@@ -88,7 +94,7 @@ export class ArtifactoryClient {
     ): Promise<boolean | null> {
         const filename = filenameFromUrl(url);
 
-        const target = join(this.DIR, filename);
+        const target = join(this.dir, filename);
 
         const res = await this.safeFetch(url);
 
@@ -117,7 +123,7 @@ export class ArtifactoryClient {
 
     public queryUrl(props: AQueryProps): string {
         const params = new URLSearchParams({
-            repos: this.REPO,
+            repos: this.repo,
             main_download: 'true',
         });
 
@@ -125,7 +131,7 @@ export class ArtifactoryClient {
             if (k !== 'repo' && k !== 'server') params.set(k, v);
         });
 
-        return `https://${this.SERVER}/artifactory/api/search/prop?${params}`;
+        return `https://${this.server}/artifactory/api/search/prop?${params}`;
     }
 
     public async searchArtifactory(props: AQueryProps): Promise<AResponse> {
@@ -158,7 +164,7 @@ export class ArtifactoryClient {
     ): Promise<Response | null> {
         let res: Response;
         const headers = new Headers(settings.headers);
-        headers.set('Authorization', this.TOKEN);
+        headers.set('Authorization', this.token);
 
         try {
             res = await fetch(url, {
@@ -221,32 +227,32 @@ export class ArtifactoryClient {
     }
 
     public setServer(server: string): void {
-        this.SERVER = server;
+        this.server = server;
     }
 
     public getServer(): string {
-        return this.SERVER;
+        return this.server;
     }
 
     public setRepo(repo: string): void {
-        this.REPO = encodeURIComponent(repo);
+        this.repo = repo;
     }
 
     public getRepo(): string {
-        return this.REPO;
+        return this.repo;
     }
 
     public setDir(dir: string): void {
-        this.DIR = resolve(dir);
-        mkdir(this.DIR);
+        this.dir = resolve(dir);
+        this.createDir();
     }
 
     public getDir(): string {
-        return this.DIR;
+        return this.dir;
     }
 
     public setToken(token: string): void {
-        this.TOKEN = token;
+        this.token = token;
     }
 }
 
