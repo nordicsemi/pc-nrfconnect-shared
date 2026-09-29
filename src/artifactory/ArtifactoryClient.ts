@@ -80,7 +80,7 @@ export class ArtifactoryClient {
         path: string,
         checksum?: string,
         algorithm: 'md5' | 'sha1' | 'sha256' = 'sha256',
-    ): Promise<boolean | null> {
+    ): Promise<string | null> {
         return await this.downloadArtifactFromUrl(
             this.downloadUrl(path),
             checksum,
@@ -92,7 +92,7 @@ export class ArtifactoryClient {
         url: string,
         checksum?: string,
         algorithm: 'md5' | 'sha1' | 'sha256' = 'sha256',
-    ): Promise<boolean | null> {
+    ): Promise<string | null> {
         const filename = filenameFromUrl(url);
 
         const target = join(this.dir, filename);
@@ -103,24 +103,24 @@ export class ArtifactoryClient {
 
         const buffer = Buffer.from(await res.arrayBuffer());
 
-        let isValid: boolean = true;
-
         if (checksum) {
             const actualChecksum = createHash(algorithm)
                 .update(buffer)
                 .digest('hex');
 
-            isValid = checksum.toLowerCase() === actualChecksum.toLowerCase();
-            if (!isValid) {
+            if (checksum.toLowerCase() === actualChecksum.toLowerCase()) {
+                logger.error(
+                    `Checksum mismatch for ${url}: expected ${checksum}, got ${actualChecksum}`,
+                );
                 this.eventEmitter.emit('checksumInvalid');
-                return false;
+                return null;
             }
         }
 
         await this.dirReady;
         await writeFile(target, buffer);
 
-        return isValid;
+        return target;
     }
 
     public queryUrl(props: AQueryProps): string {
