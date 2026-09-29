@@ -16,7 +16,6 @@ import {
     type AQueryProps,
     type AResponse,
     ArtifactoryClient,
-    filenameFromUrl,
 } from './ArtifactoryClient';
 
 export const TypeScheme = z.enum(['Modem', 'Network', 'Application']);
@@ -327,25 +326,19 @@ export class FirmwareClient {
     }
 
     protected async downloadFirmware(f: Source): Promise<Source | null> {
-        const valid = await this.CLIENT.downloadArtifactFromUrl(
+        const path = await this.CLIENT.downloadArtifactFromUrl(
             f.file,
             f.checksum,
         );
 
-        if (valid === null) {
-            logger.error('No download recieved');
+        if (path === null) {
+            logger.error('Download unsuccessful');
             return null;
         }
 
-        if (valid === false) {
-            logger.warn('Invalid checksum');
-        }
-
-        const path = filenameFromUrl(f.file);
-
         const outFirmware: Source = {
             ...f,
-            file: join(this.FIRMWAREDIR, path),
+            file: resolve(path),
         };
 
         await this.putSource(outFirmware);
