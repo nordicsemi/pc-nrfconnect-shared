@@ -118,6 +118,9 @@ test('convertToSemver', () => {
     expect(
         convertToSemver({ version: 'JLink_V8.10b', versionFormat: 'string' }),
     ).toBe('8.10.2');
+    expect(
+        convertToSemver({ version: 'JLink_V10.10z', versionFormat: 'string' }),
+    ).toBe('10.10.26');
 });
 
 describe('existingIsOlderThanExpected', () => {

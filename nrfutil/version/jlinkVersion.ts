@@ -45,7 +45,7 @@ export const hasExpectedVersionFormat = (
 
 export const convertToSemver = (version: DiscriminatedVersion) => {
     const [, majorMinor, patchLetter] =
-        strippedVersionName(version).match(/(\d\.\d+)(.)?/) ?? [];
+        strippedVersionName(version).match(/(\d+\.\d+)(.)?/) ?? [];
 
     const patch = patchLetter
         ? patchLetter.charCodeAt(0) - 'a'.charCodeAt(0) + 1
