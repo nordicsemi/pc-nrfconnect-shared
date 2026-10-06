@@ -29,6 +29,12 @@ test('strippedVersionName', () => {
             versionFormat: 'string',
         }),
     ).toBe('7.96');
+    expect(
+        strippedVersionName({
+            version: '10.00b',
+            versionFormat: 'string',
+        }),
+    ).toBe('10.00b');
 });
 
 describe('expectedFormat', () => {
@@ -102,6 +108,15 @@ describe('expectedFormat', () => {
                 false,
             ),
         ).toBe(true);
+        expect(
+            hasExpectedVersionFormat(
+                {
+                    version: 'JLink_V10.00 ',
+                    versionFormat: 'string',
+                },
+                false,
+            ),
+        ).toBe(true);
     });
 });
 
@@ -136,8 +151,8 @@ describe('existingIsOlderThanExpected', () => {
         version: 'JLink_V7.96 ',
         versionFormat: 'string',
     } as const;
-    const version810b = {
-        version: 'JLink_V8.10b',
+    const version1010b = {
+        version: 'JLink_V10.10b',
         versionFormat: 'string',
     } as const;
 
@@ -172,7 +187,7 @@ describe('existingIsOlderThanExpected', () => {
         ).toBe(false);
         expect(
             existingIsOlderThanExpected({
-                ...version810b,
+                ...version1010b,
                 name: 'JlinkARM',
                 expectedVersion: version794i,
             }),
@@ -198,7 +213,7 @@ describe('existingIsOlderThanExpected', () => {
             existingIsOlderThanExpected({
                 ...version794i,
                 name: 'JlinkARM',
-                expectedVersion: version810b,
+                expectedVersion: version1010b,
             }),
         ).toBe(true);
     });
@@ -281,18 +296,18 @@ describe('getJlinkCompatibility', () => {
             getJlinkCompatibility(
                 createModuleVersion({
                     name: 'JlinkARM',
-                    version: 'JLink_V8.10f',
+                    version: 'JLink_V11.10f',
                     versionFormat: 'string',
                     expectedVersion: {
-                        version: 'JLink_V7.94i',
+                        version: 'JLink_V10.94i',
                         versionFormat: 'string',
                     },
                 }),
             ),
         ).toEqual({
             kind: 'Newer SEGGER J-Link is used',
-            requiredJlink: '7.94i',
-            actualJlink: '8.10f',
+            requiredJlink: '10.94i',
+            actualJlink: '11.10f',
         });
     });
 
