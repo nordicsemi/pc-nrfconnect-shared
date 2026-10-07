@@ -13,6 +13,10 @@ every new version is a new major version.
 
 - Program board controller methods.
 
+### Fixed
+
+- Handling two-digit J-Link version numbers.
+
 ## 260.0.0 - 2026-09-11
 
 ### Fixed
