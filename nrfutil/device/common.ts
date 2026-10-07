@@ -85,6 +85,7 @@ export interface DeviceTraits {
     broken?: boolean;
     mcuBoot?: boolean;
     modem?: boolean;
+    boardController?: boolean;
 }
 
 export interface USB {

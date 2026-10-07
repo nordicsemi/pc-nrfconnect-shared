@@ -25,6 +25,7 @@ const onLogging = jest.fn();
 const setLogLevel = jest.fn();
 const setVerboseLogging = jest.fn();
 const getModuleVersion = jest.fn();
+const programBoardController = jest.fn();
 
 export default {
     program,
@@ -45,4 +46,5 @@ export default {
     setLogLevel,
     setVerboseLogging,
     getModuleVersion,
+    programBoardController,
 };
