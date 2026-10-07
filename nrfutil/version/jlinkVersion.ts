@@ -71,7 +71,8 @@ export const existingIsOlderThanExpected = (
 };
 
 const nrfutilDeviceToJLink = (nrfutilDeviceVersion: string) => {
-    // According to https://docs.nordicsemi.com/bundle/nrfutil/page/guides/installing.html#prerequisites
+    // According to https://docs.nordicsemi.com/r/bundle/nrfutil/page/guides/installing.html/prerequisites#:~:text=What%20J%2DLink%20version%20you%20need
+    // Since 2.7.0 nrfutil device reports the required J-Link version itself, so we do not need to hardcode it here for more versions.
     if (semver.lt(nrfutilDeviceVersion, '2.0.0')) {
         return '7.80c';
     }
