@@ -5,6 +5,7 @@
         "moduleResolution": "node",
         "esModuleInterop": true,
         "jsx": "react",
+        "types": ["jest", "node", "@testing-library/jest-dom"],
 
         "strict": true,
         "isolatedModules": true,
