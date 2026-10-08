@@ -13,6 +13,10 @@ every new version is a new major version.
 
 - Handling two-digit J-Link version numbers.
 
+### Changed
+
+- Updated dependency adm-zip because of security advisory.
+
 ## 260.0.0 - 2026-09-11
 
 ### Fixed
