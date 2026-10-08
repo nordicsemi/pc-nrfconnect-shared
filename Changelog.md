@@ -7,7 +7,11 @@ This project does _not_ adhere to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html) but contrary to it
 every new version is a new major version.
 
-## Unreleased
+## 261.0.0 - 2026-10-08
+
+### Added
+
+- Program board controller methods.
 
 ### Fixed
 

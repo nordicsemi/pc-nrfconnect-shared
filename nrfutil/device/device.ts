@@ -17,6 +17,7 @@ import getFwInfo from './getFwInfo';
 import getProtectionStatus from './getProtectionStatus';
 import list from './list';
 import program from './program';
+import programBoardController from './programBoardController';
 import recover from './recover';
 import reset from './reset';
 import setMcuState from './setMcuState';
@@ -63,5 +64,6 @@ export default {
     boardController,
     getBoardControllerVersion,
     getBoardControllerConfig,
+    programBoardController,
     batch: () => new Batch(),
 };
