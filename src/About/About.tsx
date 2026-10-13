@@ -17,7 +17,7 @@ export interface AboutPaneProps {
 }
 
 export default ({ documentation, feedbackCategories }: AboutPaneProps) => (
-    <section className="tw-preflight tw-flex tw-flex-row tw-flex-wrap tw-justify-center tw-gap-4 tw-pb-4">
+    <section className="tw-preflight tw-flex tw-flex-row tw-flex-wrap tw-justify-center tw-gap-2 tw-pb-4">
         <ApplicationCard className="tw-max-w-80 tw-flex-1 tw-basis-60" />
         <DeviceCard className="tw-max-w-80 tw-flex-1 tw-basis-60" />
         {documentation && documentation.length && (
