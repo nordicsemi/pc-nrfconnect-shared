@@ -1,0 +1,110 @@
+name: PR checklist
+
+on:
+    workflow_call:
+
+jobs:
+    checklist:
+        name: PR checklist
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: read
+        concurrency:
+            group: pr-checklist-${{ github.event.pull_request.number }}
+            cancel-in-progress: true
+        steps:
+            - name: Check required checklist items
+              uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+              with:
+                  script: |
+                      // Must match .github/pull_request_template.md in every app repo exactly.
+                      // Boxes that must be ticked.
+                      const REQUIRED = [
+                          'Ensure all user-facing text is spell-checked.',
+                      ];
+                      // Bold title -> its options. Exactly one option per group must be ticked.
+                      const GROUPS = {
+                          'Version in package.json': ['Bumped', 'Can stay the same'],
+                          'Changelog': ['Updated', 'Update not needed'],
+                          'Support doc in docs/...yml': ['Updated', 'Can stay the same'],
+                          "Greg's review": ['Greg confirmed this PR', 'Review not needed'],
+                      };
+                      const BYPASS_LABEL = 'checkboxes not required';
+
+                      // Fetch the live PR instead of using the event payload, so re-runs
+                      // see the current description and labels.
+                      const { data: pr } = await github.rest.pulls.get({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          pull_number: context.payload.pull_request.number,
+                      });
+
+                      if (pr.labels.some(l => l.name.toLowerCase() === BYPASS_LABEL)) {
+                          core.info(`PR has the "${BYPASS_LABEL}" label, skipping the checklist check.`);
+                          return;
+                      }
+
+                      // Text inside HTML comments or code blocks isn't rendered as a
+                      // checkbox, so it must not count towards the checklist.
+                      const body = (pr.body ?? '')
+                          .replace(/<!--[\s\S]*?-->/g, '')
+                          .replace(/^(```|~~~)[\s\S]*?^\1/gm, '');
+
+                      // A box belongs to the group whose "- **Title**" line it is nested under.
+                      // Any other top-level line ends the group.
+                      const titles = new Set();
+                      const boxes = [];
+                      let group = null;
+                      for (const line of body.split(/\r?\n/)) {
+                          if (!line.trim()) continue;
+                          const title = line.match(/^[-*+]\s+\*\*(.+?)\*\*\s*$/);
+                          if (title) {
+                              group = title[1];
+                              titles.add(group);
+                              continue;
+                          }
+                          if (!/^\s/.test(line)) group = null;
+                          const box = line.match(/^\s*[-*+]\s+\[([ xX])\]\s+(.+?)\s*$/);
+                          if (box) boxes.push({ group, checked: box[1] !== ' ', text: box[2] });
+                      }
+
+                      const problems = [];
+                      for (const item of REQUIRED) {
+                          const matches = boxes.filter(b => b.text === item);
+                          if (matches.length === 0) {
+                              problems.push(`Missing or modified: "${item}"`);
+                          } else if (matches.some(b => !b.checked)) {
+                              problems.push(`Not checked: "${item}"`);
+                          }
+                      }
+                      for (const [title, options] of Object.entries(GROUPS)) {
+                          if (!titles.has(title)) {
+                              problems.push(`Missing or modified: "${title}"`);
+                              continue;
+                          }
+                          const inGroup = boxes.filter(b => b.group === title);
+                          const missing = options.filter(o => !inGroup.some(b => b.text === o));
+                          if (missing.length > 0) {
+                              problems.push(...missing.map(o => `Missing or modified: "${title}" / "${o}"`));
+                              continue;
+                          }
+                          const ticked = options.filter(o => inGroup.some(b => b.text === o && b.checked));
+                          if (ticked.length === 0) {
+                              problems.push(`Nothing ticked under "${title}", tick one option`);
+                          } else if (ticked.length > 1) {
+                              problems.push(`More than one option ticked under "${title}", tick only one`);
+                          }
+                      }
+
+                      if (problems.length > 0) {
+                          core.setFailed(
+                              'PR checklist is incomplete:\n' +
+                              problems.map(p => `  - ${p}`).join('\n') +
+                              '\n\nTick the required boxes and exactly one option in each group. If an item was ' +
+                              'edited or deleted, restore its original text from .github/pull_request_template.md. ' +
+                              'If this PR does not need the checklist, ask a maintainer to add the ' +
+                              `"${BYPASS_LABEL}" label.`
+                          );
+                      } else {
+                          core.info('All required checklist items are checked.');
+                      }
