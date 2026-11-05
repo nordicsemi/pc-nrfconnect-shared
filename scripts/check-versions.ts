@@ -16,7 +16,7 @@ const fail = (message: string) => {
     process.exit(1);
 };
 
-const configuredVersions = Object.values(versionsByLauncherVersion).map(
+const supportedElectronVersions = Object.values(versionsByLauncherVersion).map(
     ({ electron }) => electron,
 );
 
@@ -25,7 +25,7 @@ const checkElectronPeerDependencies = () => {
         .split('||')
         .map(version => version.trim());
     const missingVersions = peerDependencyVersions.filter(
-        version => !configuredVersions.includes(version),
+        version => !supportedElectronVersions.includes(version),
     );
 
     if (missingVersions.length > 0) {
@@ -34,7 +34,7 @@ const checkElectronPeerDependencies = () => {
         );
     }
 
-    const superfluousVersions = configuredVersions.filter(
+    const superfluousVersions = supportedElectronVersions.filter(
         version => !peerDependencyVersions.includes(version),
     );
 
@@ -46,7 +46,7 @@ const checkElectronPeerDependencies = () => {
 };
 
 const checkElectronDevDependency = () => {
-    const lowestConfiguredVersion = configuredVersions.reduce(
+    const lowestConfiguredVersion = supportedElectronVersions.reduce(
         (lowestVersion, version) =>
             semver.lt(version, lowestVersion) ? version : lowestVersion,
     );
