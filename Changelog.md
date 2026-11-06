@@ -12,15 +12,17 @@ every new version is a new major version.
 ### Changed
 
 - Updated Nordic Thingy:91 X PCA number.
-- Support multiple launcher and Electron versions: Before shared only defined a
-  single Electron version, while in reality apps may run with a launcher with an
-  older Electron version. This is now reflected by shared.
-- Shared now defines a minimal launcher version. It is checked, that the app has
-  the same or a higher minimal launcher version (in `engines.nrfconnect` in
-  `package.json`). Before this was just a convention.
-- When building apps, they now target the Chrome version that corresponds with
-  the Electron version, defined by the minimal launcher version, the app
-  requires.
+- Support multiple launcher and Electron versions:
+
+    Before, shared only defined a single Electron version, while in reality apps
+    may run with a launcher with an older Electron version. This is now
+    reflected by shared.
+    - Shared now defines a minimal launcher version. It is checked, that the app
+      has the same or a higher minimal launcher version (in `engines.nrfconnect`
+      in `package.json`). Before, this was just a convention.
+    - When building apps, they now target the Chrome version that corresponds
+      with the Electron version, defined by the minimal launcher version, the
+      app requires.
 
 ## 263.0.0 - 2026-11-03
 
