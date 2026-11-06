@@ -16,7 +16,7 @@ import {
     parsePackageJsonApp,
 } from '../ipc/schema/packageJson';
 import { getLatestEntry } from './latest-changelog-entry';
-import { minimalLauncherVersion } from './versions';
+import { minimalLauncherVersion, versionsForLauncherVersion } from './versions';
 
 const format = (strings: string[]) =>
     strings.map(string => `\`${string}\``).join(', ');
@@ -131,10 +131,22 @@ const checkLauncherVersion = (packageJson: PackageJsonApp) => {
         fail(
             `This must never happen but it did with the property 'engines.nrfconnect' being '${packageJson.engines.nrfconnect}'. Fix check-app-properties.ts to handle this case.`,
         );
-    } else if (semver.lt(minimalRequestedLauncher, minimalLauncherVersion)) {
-        fail(
-            `This version of shared requires at least launcher version ${minimalLauncherVersion} but the field 'engines.nrfconnect' in package.json requests '${packageJson.engines.nrfconnect}' which would also allow the lower ${minimalRequestedLauncher}.`,
-        );
+    } else {
+        if (semver.lt(minimalRequestedLauncher, minimalLauncherVersion)) {
+            fail(
+                `This version of shared requires at least launcher version ${minimalLauncherVersion} but the field 'engines.nrfconnect' in package.json requests '${packageJson.engines.nrfconnect}' which would also allow the lower ${minimalRequestedLauncher}.`,
+            );
+        }
+
+        const electronVersion = versionsForLauncherVersion(
+            minimalRequestedLauncher,
+        ).electron;
+        const electronDevDependency = packageJson.devDependencies?.electron;
+        if (electronVersion !== electronDevDependency) {
+            fail(
+                `The Electron dev dependency in 'package.json' must be ${electronVersion}. Run 'npm i --save-dev --save-exact electron@${electronVersion}'`,
+            );
+        }
     }
 };
 

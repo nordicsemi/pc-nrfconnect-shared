@@ -17,12 +17,21 @@ every new version is a new major version.
     Before, shared only defined a single Electron version, while in reality apps
     may run with a launcher with an older Electron version. This is now
     reflected by shared.
+    - Apps must now have a dev dependency on Electron, matching the version of
+      launcher they require. This is automatically checked, so when one runs
+      `npm run check` and it is not set correctly, the right invocation of
+      `npm install` is printed to fix the situation.
     - Shared now defines a minimal launcher version. It is checked, that the app
       has the same or a higher minimal launcher version (in `engines.nrfconnect`
       in `package.json`). Before, this was just a convention.
     - When building apps, they now target the Chrome version that corresponds
       with the Electron version, defined by the minimal launcher version, the
       app requires.
+
+### Steps to upgrade when using this package
+
+- Run `npm run check` and follow the instructions (e.g. to add a dev dependency
+  on Electron) until `npm run check` no longer fails.
 
 ## 263.0.0 - 2026-11-03
 
