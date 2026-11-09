@@ -6,6 +6,7 @@
 
 import semver from 'semver';
 
+import packageJson from '../package.json';
 import {
     minimalLauncherVersion,
     versionsByLauncherVersion,
@@ -21,17 +22,39 @@ describe('minimalLauncherVersion', () => {
 });
 
 describe('versionsByLauncherVersion', () => {
-    it('does not have overlapping semver ranges', () => {
-        const ranges = Object.keys(versionsByLauncherVersion);
+    const electronVersions = Object.values(versionsByLauncherVersion).map(
+        ({ electron }) => electron,
+    );
+    electronVersions.sort(semver.compare);
 
-        const overlappingRangePairs = ranges.flatMap((range, index) =>
-            ranges
+    it('does not have overlapping semver ranges', () => {
+        const launcherRanges = Object.keys(versionsByLauncherVersion);
+
+        const overlappingRangePairs = launcherRanges.flatMap((range, index) =>
+            launcherRanges
                 .slice(index + 1)
                 .filter(otherRange => semver.intersects(range, otherRange))
                 .map(otherRange => [range, otherRange]),
         );
 
         expect(overlappingRangePairs).toEqual([]);
+    });
+
+    it('has the same electron versions as in the peer dependencies', () => {
+        const electronPeerDependencies = packageJson.peerDependencies?.electron
+            ?.split('||')
+            .map(version => version.trim());
+
+        expect(electronVersions).toEqual(
+            expect.arrayContaining(electronPeerDependencies),
+        );
+        expect(electronPeerDependencies).toEqual(
+            expect.arrayContaining(electronVersions),
+        );
+    });
+
+    it('its lowest electron version matches the dev dependency', () => {
+        expect(packageJson.devDependencies.electron).toBe(electronVersions[0]);
     });
 });
 

@@ -6,56 +6,11 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import semver from 'semver';
-
 import { versionsByLauncherVersion } from '../config/versions';
-import packageJson from '../package.json';
 
 const fail = (message: string) => {
     console.error(message);
     process.exit(1);
-};
-
-const supportedElectronVersions = Object.values(versionsByLauncherVersion).map(
-    ({ electron }) => electron,
-);
-
-const checkElectronPeerDependencies = () => {
-    const peerDependencyVersions = packageJson.peerDependencies.electron
-        .split('||')
-        .map(version => version.trim());
-    const missingVersions = peerDependencyVersions.filter(
-        version => !supportedElectronVersions.includes(version),
-    );
-
-    if (missingVersions.length > 0) {
-        fail(
-            `In 'package.json' there are peer dependencies for Electron version(s) ${missingVersions.join(', ')} but no matching entries in 'scripts/versions.ts'.`,
-        );
-    }
-
-    const superfluousVersions = supportedElectronVersions.filter(
-        version => !peerDependencyVersions.includes(version),
-    );
-
-    if (superfluousVersions.length > 0) {
-        fail(
-            `In 'scripts/versions.ts' there are entries for Electron version(s) ${superfluousVersions.join(', ')} but no corresponding peer dependencies in 'package.json'.`,
-        );
-    }
-};
-
-const checkElectronDevDependency = () => {
-    const lowestConfiguredVersion = supportedElectronVersions.reduce(
-        (lowestVersion, version) =>
-            semver.lt(version, lowestVersion) ? version : lowestVersion,
-    );
-
-    if (packageJson.devDependencies.electron !== lowestConfiguredVersion) {
-        fail(
-            `The Electron development dependency in 'package.json' must be the lowest version in 'scripts/versions.ts' (${lowestConfiguredVersion}), but is ${packageJson.devDependencies.electron}.`,
-        );
-    }
 };
 
 type ElectronReleases = { version: string; chrome: string; node: string }[];
@@ -108,9 +63,6 @@ but according to the electron release it should be:
     };
 
 const main = async () => {
-    checkElectronPeerDependencies();
-    checkElectronDevDependency();
-
     const electronReleases = await (
         await fetch('https://releases.electronjs.org/releases.json')
     ).json();
