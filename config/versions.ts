@@ -47,7 +47,7 @@ export const versionsForLauncherVersion = (
 
     if (result == null) {
         throw new Error(
-            `No versions found for launcher version ${launcherVersion}. Please update scripts/versions.ts to include this version.`,
+            `No versions found for launcher version ${launcherVersion}. Please update config/versions.ts to include this version.`,
         );
     }
 

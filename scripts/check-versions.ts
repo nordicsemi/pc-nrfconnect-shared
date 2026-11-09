@@ -8,8 +8,8 @@
 
 import semver from 'semver';
 
+import { versionsByLauncherVersion } from '../config/versions';
 import packageJson from '../package.json';
-import { versionsByLauncherVersion } from './versions';
 
 const fail = (message: string) => {
     console.error(message);
@@ -87,7 +87,7 @@ const checkVersionsByLauncherEntry =
                 .join('.');
 
             fail(
-                `Version mismatch! For the launcher version range ${launcherVersionRange}, 'scripts/versions.ts' contains the following entry:
+                `Version mismatch! For the launcher version range ${launcherVersionRange}, 'config/versions.ts' contains the following entry:
 
     '${launcherVersionRange}': {
         electron: '${expectedVersions.electron}',

@@ -9,8 +9,8 @@
 import { build } from 'esbuild';
 import { execSync } from 'node:child_process';
 
+import { minimalLauncherVersion } from '../config/versions';
 import { build as esbuildRenderer } from './esbuild-renderer';
-import { minimalLauncherVersion } from './versions';
 
 const main = async () => {
     console.log('Generate types');

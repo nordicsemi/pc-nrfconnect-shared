@@ -15,7 +15,7 @@ import * as path from 'node:path';
 import { type SemVer } from 'semver';
 import tailwindcss from 'tailwindcss';
 
-import { versionsForLauncherVersion } from './versions';
+import { versionsForLauncherVersion } from '../config/versions';
 
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 

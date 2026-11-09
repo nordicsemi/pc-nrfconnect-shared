@@ -12,11 +12,14 @@ import property from 'lodash/property';
 import semver from 'semver';
 
 import {
+    minimalLauncherVersion,
+    versionsForLauncherVersion,
+} from '../config/versions';
+import {
     type PackageJsonApp,
     parsePackageJsonApp,
 } from '../ipc/schema/packageJson';
 import { getLatestEntry } from './latest-changelog-entry';
-import { minimalLauncherVersion, versionsForLauncherVersion } from './versions';
 
 const format = (strings: string[]) =>
     strings.map(string => `\`${string}\``).join(', ');
