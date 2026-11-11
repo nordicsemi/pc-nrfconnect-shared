@@ -8,17 +8,15 @@ import semver, { type SemVer } from 'semver';
 
 export const minimalLauncherVersion = '5.2.0';
 
-type VersionsByLauncherVersion = Record<
+export const versionsByLauncherVersion: Record<
     string,
     {
         electron: string;
         chrome: string;
         node: string;
     }
->;
-
-export const versionsByLauncherVersion: VersionsByLauncherVersion = {
-    '>=5.1.0 <5.4.0': {
+> = {
+    '>=5.2.0 <5.4.0': {
         electron: '32.1.2',
         chrome: '128.0.6613',
         node: '20.17.0',

@@ -13,11 +13,23 @@ import {
     versionsForLauncherVersion,
 } from './versions';
 
+const lowestSemver = (semvers: string[]) => semvers.toSorted(semver.compare)[0];
+
 describe('minimalLauncherVersion', () => {
     it('should have versions described for it', () => {
         expect(() =>
             versionsForLauncherVersion(minimalLauncherVersion),
         ).not.toThrow();
+    });
+
+    it('must be the minimal version described in versionsByLauncherVersion', () => {
+        const minimalLauncherVersionInMapping = lowestSemver(
+            Object.keys(versionsByLauncherVersion).map(
+                range => semver.minVersion(range)!.version,
+            ),
+        );
+
+        expect(minimalLauncherVersion).toBe(minimalLauncherVersionInMapping);
     });
 });
 
@@ -25,7 +37,6 @@ describe('versionsByLauncherVersion', () => {
     const electronVersions = Object.values(versionsByLauncherVersion).map(
         ({ electron }) => electron,
     );
-    electronVersions.sort(semver.compare);
 
     it('does not have overlapping semver ranges', () => {
         const launcherRanges = Object.keys(versionsByLauncherVersion);
@@ -54,7 +65,9 @@ describe('versionsByLauncherVersion', () => {
     });
 
     it('its lowest electron version matches the dev dependency', () => {
-        expect(packageJson.devDependencies.electron).toBe(electronVersions[0]);
+        expect(packageJson.devDependencies.electron).toBe(
+            lowestSemver(electronVersions),
+        );
     });
 });
 
