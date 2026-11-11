@@ -229,7 +229,7 @@ const devicesByPca: { [P in KnownDevicePCA]: DeviceInfo } = {
         icon: nrf91logo,
         website: {},
     },
-    PCA20049: {
+    PCA20065: {
         name: 'Nordic Thingy:91 X',
         cores: 1,
         icon: nrf91logo,
@@ -403,7 +403,7 @@ const deviceByUsb = (device: Device) => {
             return devicesByPca.PCA20053;
         }
         if (device.serialNumber?.startsWith('THINGY91X')) {
-            return devicesByPca.PCA20049;
+            return devicesByPca.PCA20065;
         }
         if (device.serialNumber?.startsWith('THINGY91')) {
             return devicesByPca.PCA20035;
