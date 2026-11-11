@@ -12,6 +12,7 @@ every new version is a new major version.
 ### Changed
 
 - Updated Nordic Thingy:91 X PCA number.
+- Bumped lib in TypeScript config to `ES2023`.
 - Support multiple launcher and Electron versions:
 
     Before, shared only defined a single Electron version, while in reality apps
