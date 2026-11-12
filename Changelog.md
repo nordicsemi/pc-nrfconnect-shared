@@ -9,6 +9,14 @@ every new version is a new major version.
 
 ## 264.0.0 - UNRELEASED
 
+### Added
+
+- Script `set-minimal-launcher`. Run `npx set-minimal-launcher [version]` in an
+  app to set `engines.nrfconnect` in `package.json` to that launcher version and
+  install the matching Electron version as a dev dependency. Without a version,
+  the version already in `engines.nrfconnect` is used, so the script only
+  installs the matching Electron version.
+
 ### Changed
 
 - Updated Nordic Thingy:91 X PCA number.
@@ -31,8 +39,7 @@ every new version is a new major version.
 
 ### Steps to upgrade when using this package
 
-- Run `npm run check` and follow the instructions (e.g. to add a dev dependency
-  on Electron) until `npm run check` no longer fails.
+- Run `npx set-minimal-launcher` to add Electron as a dev dependency.
 
 ## 263.0.0 - 2026-11-03
 

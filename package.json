@@ -11,6 +11,7 @@
     "bin": {
         "check-for-typescript": "scripts/check-for-typescript.ts",
         "check-app-properties": "scripts/check-app-properties.ts",
+        "set-minimal-launcher": "scripts/set-minimal-launcher.ts",
         "nrfconnect-license": "scripts/nrfconnect-license.ts",
         "run-esbuild": "scripts/build-app.ts"
     },
@@ -57,6 +58,7 @@
         "applicationinsights": "^2.9.6",
         "autoprefixer": "10.4.14",
         "bootstrap": "4.6.2",
+        "chalk": "4.1.2",
         "commander": "10.0.0",
         "date-fns": "2.29.3",
         "electron-store": "8.1.0",
