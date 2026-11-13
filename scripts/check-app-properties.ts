@@ -9,7 +9,12 @@
 import { execSync } from 'child_process';
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import property from 'lodash/property';
+import semver from 'semver';
 
+import {
+    minimalLauncherVersion,
+    versionsForLauncherVersion,
+} from '../config/versions';
 import {
     type PackageJsonApp,
     parsePackageJsonApp,
@@ -24,10 +29,10 @@ const propertyIsMissing = (obj: unknown) => (propertyPath: string) => {
     return value == null || value === '';
 };
 
-const fail = (message: string) => {
+function fail(message: string): never {
     console.error(message);
     process.exit(1);
-};
+}
 
 const warn = (message: string) => {
     console.warn(message);
@@ -120,6 +125,36 @@ const checkFileProperty = (packageJson: PackageJsonApp) => {
     );
 };
 
+const checkLauncherVersion = (packageJson: PackageJsonApp) => {
+    const minimalRequestedLauncher = semver.minVersion(
+        packageJson.engines.nrfconnect,
+    );
+
+    if (minimalRequestedLauncher == null) {
+        fail(
+            `Unable to determine the minimal launcher version requested by \`engines.nrfconnect\` set to \`${packageJson.engines.nrfconnect}\`.`,
+        );
+    } else {
+        if (semver.lt(minimalRequestedLauncher, minimalLauncherVersion)) {
+            fail(
+                `This version of shared requires at least launcher version ${minimalLauncherVersion} but the field \`engines.nrfconnect\` in package.json requests \`${packageJson.engines.nrfconnect}\` which would also allow the lower ${minimalRequestedLauncher}.
+
+Run \`npx set-minimal-launcher ${minimalLauncherVersion}\` to require the new minimal launcher version.`,
+            );
+        }
+
+        const electronVersion = versionsForLauncherVersion(
+            minimalRequestedLauncher,
+        ).electron;
+        const electronDevDependency = packageJson.devDependencies?.electron;
+        if (electronVersion !== electronDevDependency) {
+            fail(
+                `The Electron dev dependency in package.json must be ${electronVersion}. Run \`npx set-minimal-launcher\` to fix this.`,
+            );
+        }
+    }
+};
+
 const readAndCheckPackageJson = () => {
     const packageJsonResult = parsePackageJsonApp(
         readFileSync('./package.json', 'utf8'),
@@ -134,6 +169,7 @@ const readAndCheckPackageJson = () => {
 
     checkOptionalProperties(packageJson);
     checkFileProperty(packageJson);
+    checkLauncherVersion(packageJson);
 
     return packageJson;
 };
@@ -165,8 +201,6 @@ const filesIn = (directory: string) => {
         return readdirSync(directory);
     } catch {
         fail(`Unable to read directory \`${directory}\`.`);
-        // Unreachable, but not understood by Typescript
-        throw new Error();
     }
 };
 

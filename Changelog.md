@@ -9,9 +9,37 @@ every new version is a new major version.
 
 ## 264.0.0 - UNRELEASED
 
+### Added
+
+- Script `set-minimal-launcher`. Run `npx set-minimal-launcher [version]` in an
+  app to set `engines.nrfconnect` in `package.json` to that launcher version and
+  install the matching Electron version as a dev dependency. Without a version,
+  the version already in `engines.nrfconnect` is used, so the script only
+  installs the matching Electron version.
+
 ### Changed
 
 - Updated Nordic Thingy:91 X PCA number.
+- Bumped lib in TypeScript config to `ES2023`.
+- Support multiple launcher and Electron versions:
+
+    Before, shared only defined a single Electron version, while in reality apps
+    may run with a launcher with an older Electron version. This is now
+    reflected by shared.
+    - Apps must now have a dev dependency on Electron, matching the version of
+      launcher they require. This is automatically checked, so when one runs
+      `npm run check` and it is not set correctly, the right invocation of
+      `npm install` is printed to fix the situation.
+    - Shared now defines a minimal launcher version. It is checked, that the app
+      has the same or a higher minimal launcher version (in `engines.nrfconnect`
+      in `package.json`). Before, this was just a convention.
+    - When building apps, they now target the Chrome version that corresponds
+      with the Electron version, defined by the minimal launcher version, the
+      app requires.
+
+### Steps to upgrade when using this package
+
+- Run `npx set-minimal-launcher` to add Electron as a dev dependency.
 
 ## 263.0.0 - 2026-11-03
 
@@ -412,7 +440,7 @@ import { Card } from '@nordicsemiconductor/pc-nrfconnect-shared';
 
 ### Changed
 
-- The required lincense file was slightly changed.
+- The required license file was slightly changed.
 
 ### Steps to upgrade when using this package
 
@@ -640,15 +668,15 @@ import { Card } from '@nordicsemiconductor/pc-nrfconnect-shared';
 
 ### Added
 
-- `nrf-probe` verison check for `nrfutil device`.
+- `nrf-probe` version check for `nrfutil device`.
 
 ### Removed
 
-- `nrfjprog` verison check for `nrfutil device`.
+- `nrfjprog` version check for `nrfutil device`.
 
 ### Changed
 
-- Text in the Application card of the About tab can now be highlightede and
+- Text in the Application card of the About tab can now be highlighted and
   copied.
 - J-Link download URL for `JLink_MacOSX_V794i_universal.pkg` to
   `JLink_MacOSX_V818_universal.pkg`
@@ -811,11 +839,11 @@ Overrides v202 as it was released a prerelease.
 
 ### Changed
 
-- DeviceSelector Abort controler now aborts on the onDisconnected event
+- DeviceSelector Abort controller now aborts on the onDisconnected event
 
 ### Fixed
 
-- Auto connecting from CLI when multple devices are connected now works as
+- Auto connecting from CLI when multiple devices are connected now works as
   expected.
 
 ## 185.0.0 - 2024-09-20
@@ -829,7 +857,7 @@ Overrides v202 as it was released a prerelease.
 ### Fixed
 
 - Stop nRF Util sandbox from starting to run an aborted command.
-- Device setup event call order when autoreconnecting at the same time as
+- Device setup event call order when auto reconnecting at the same time as
   selecting.
 
 ### Steps to upgrade when using this package
@@ -1088,7 +1116,7 @@ Overrides v202 as it was released a prerelease.
 - `transparentButtonBg` parameter to `Dropdown` component.
 - `NumberInput` component (provides text, input, optional unit, and slider).
 - Common way to queue ongoing pending tasks. If an app is closed, a dialog is
-  prompted to alert users before clo sing app. Redux states for this are:
+  prompted to alert users before closing app. Redux states for this are:
     - `addConfirmBeforeClose`
     - `clearConfirmBeforeClose`
     - `preventAppCloseUntilComplete` can be used to wrap some promise and secure
@@ -1350,7 +1378,7 @@ Overrides v202 as it was released a prerelease.
 
 ### Added
 
-- `jprogDeviceSetup` take in aan optional boolean to skip the device setup if
+- `jprogDeviceSetup` take in an optional boolean to skip the device setup if
   device is protected. Default remain to show dialog. Apps will need to opt-in
 
 ## 136.0.0 - 2023-12-01
@@ -1359,7 +1387,7 @@ Overrides v202 as it was released a prerelease.
 
 - `useStopwatch` milliseconds was not correctly calculated
 - External JLink devices would not connect to apps device list properly if
-  selected before they are connected to the debug-in heder of the device
+  selected before they are connected to the debug-in header of the device
 
 ### Changed
 
@@ -1553,7 +1581,7 @@ render(<App panes={[]} />);
   information to speed up enumeration and hotplug events.
     - new optional property in device object named `devkit`
     - `.jlink` property can be obtained by calling
-      `NrfutilDeviceLib.deviceInfo().jlink` on a Jlink device
+      `NrfutilDeviceLib.deviceInfo().jlink` on a J-Link device
     - `.hwInfo` property can be obtained by calling
       `NrfutilDeviceLib.deviceInfo().hwInfo` on a device
     - `.dfuTriggerVersion` property can be obtained by calling
@@ -1571,7 +1599,7 @@ render(<App panes={[]} />);
 
 ### Fixed
 
-- Check installed JLink version against expected version given by nrfutil
+- Check installed J-Link version against expected version given by nrfutil
   (previously this was the version bundled by the launcher).
 
 ### Steps to upgrade when using this package
@@ -2003,7 +2031,7 @@ declare module '!!@svgr!*.svg' {
 - Re-added underline (mistakenly removed) on hover for `link` variant of
   `Button` component.
 - Apps now have to load themselves, i.e. there is no `ReactDOM.render` done from
-  the launcher anymore. The app chooses which html-page will be the entrypoint.
+  the launcher anymore. The app chooses which html-page will be the entry point.
 - Passing devices of type nrf-device-lib-js `Device` to calls from
   `deviceInfo.ts` is not allowed. Passing the nrf-device-lib-js version of
   `Device` is now allowed.
@@ -2349,7 +2377,7 @@ module.exports = {
 
 ### Added
 
-- Exported `getWaitForDevice` hance allowing apps to resort previous state if
+- Exported `getWaitForDevice` hence allowing apps to resort previous state if
   needed
 
 ### Added
@@ -2555,7 +2583,7 @@ module.exports = {
 
 ### Fixed
 
-- Feedback pane link to Nordiv DevZone did not open in the browser.
+- Feedback pane link to Nordic DevZone did not open in the browser.
 - Properly update package version when running the prepare script on windows.
 
 ### Changed
@@ -2697,14 +2725,14 @@ module.exports = {
 
 ### Fixed
 
-- Autoreconnected devices were not passed with persisted data to the
+- Auto reconnected devices were not passed with persisted data to the
   `onDeviceSelected`/`onDeviceIsReady` callbacks.
 
 ### Removed
 
-- Support for buiding apps with webpack. If you want to continue to use webpack,
-  you now have to provide the configuration and install the needed dependencies
-  yourself.
+- Support for building apps with webpack. If you want to continue to use
+  webpack, you now have to provide the configuration and install the needed
+  dependencies yourself.
 
 ### Steps to upgrade when using this package
 
@@ -2789,7 +2817,7 @@ module.exports = {
 
 ### Fixed
 
-- Devices now receive persisted data on first enumation.
+- Devices now receive persisted data on first enumeration.
 - Safe guard against retaining stale wait for device request if a new device is
   selected
 
@@ -3052,7 +3080,7 @@ module.exports = {
 
 ### Changed
 
-- `PersistedSerialPort` takes app name fom json
+- `PersistedSerialPort` takes app name from json
 - `TerminalSettings` vCom Index is append with `vCom-` in persist store
 
 ## 6.18.4 - 2023-02-01
@@ -3345,13 +3373,13 @@ this:
 
 - `NumberInlineInput` can opt to have step defined allowing only values that are
   a factor of this step size.
-- `NumberInlineInput` can opt to have explict ranges allowing for split ranges.
+- `NumberInlineInput` can opt to have explicit ranges allowing for split ranges.
 - `InlineInput` can opt to have support for up/down keyboard events to control
   the value.
 - `NumberInlineInput` support for up/down keyboard events to control the value.
 - `Slider` can opt to have steps defined allowing allowing to increment the
   value with the step size.
-- `Slider` can opt to have explict ranges allowing for split ranges. Ticks are
+- `Slider` can opt to have explicit ranges allowing for split ranges. Ticks are
   not yet supported on this mode.
 - Warn in console if Min and Max are not factors of the optional step size.
 
@@ -3624,7 +3652,7 @@ this:
 ### Changed
 
 - Move all devDependencies into dependencies and remove peer dependencies. The
-  peer ependencies were use by all apps anyways, so moving them all into
+  peer dependencies were use by all apps anyways, so moving them all into
   dependencies will let the apps remove their own version of them.
 
 ## 6.3.2 - 2022-06-21
@@ -5102,7 +5130,7 @@ module.exports = require('pc-nrfconnect-shared/config/jest.config')();
 
 ### Fixed
 
-- The remote property on the electron mock was noch mocked correctly.
+- The remote property on the electron mock was not mocked correctly.
 
 ### Changed
 
