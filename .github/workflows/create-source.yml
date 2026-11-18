@@ -26,6 +26,9 @@ on:
                 required: true
                 type: string
 
+permissions:
+    contents: read
+
 jobs:
     create-source:
         runs-on: ubuntu-latest

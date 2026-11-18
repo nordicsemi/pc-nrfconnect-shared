@@ -10,6 +10,8 @@ on:
                 required: true
                 type: string
 
+permissions: {}
+
 jobs:
     zap-cache:
         runs-on: ubuntu-latest

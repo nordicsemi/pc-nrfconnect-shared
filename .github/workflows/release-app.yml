@@ -16,11 +16,16 @@ on:
             COM_NORDICSEMI_FILES_PASSWORD_SWTOOLS_FRONTEND:
             GH_PACKAGES_TOKEN:
 
+permissions: {}
+
 env:
     ARTIFACT_NAME: ${{ github.event.repository.name }}
 
 jobs:
     build:
+        permissions:
+            contents: read
+            pull-requests: write
         uses: ./.github/workflows/build-app.yml
         with:
             ref: ${{ inputs.ref }}
@@ -31,6 +36,8 @@ jobs:
     release:
         runs-on: ubuntu-latest
         needs: build
+        permissions:
+            contents: write
         env:
             GH_TOKEN: ${{ github.token }}
         environment:
@@ -91,6 +98,8 @@ jobs:
     check-if-docs-exist:
         needs: release
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
         outputs:
             docs_exist: ${{ steps.check.outputs.docs_exist }}
         steps:

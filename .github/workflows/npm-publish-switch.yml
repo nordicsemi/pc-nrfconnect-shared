@@ -33,6 +33,10 @@ on:
                 required: false
                 type: string
 
+permissions:
+    contents: write
+    id-token: write
+
 jobs:
     auto-release:
         if: ${{ github.event_name == 'push' }}
