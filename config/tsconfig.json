@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "target": "es2021",
-        "lib": ["es2022", "dom", "dom.iterable", "dom.asynciterable"],
+        "target": "es2023",
+        "lib": ["es2023", "dom", "dom.iterable", "dom.asynciterable"],
         "moduleResolution": "node",
         "esModuleInterop": true,
         "jsx": "react",

@@ -6,55 +6,69 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { execSync } from 'child_process';
+import { versionsByLauncherVersion } from '../config/versions';
 
-import * as versions from './versions';
-
-const runNpmLsElectron = () => {
-    try {
-        return execSync('npm ls electron --json', { encoding: 'utf8' });
-    } catch {
-        console.error(
-            '\nFailed to get the currently used version of electron. Maybe running `npm ci` is needed.',
-        );
-        process.exit(1);
-    }
+const fail = (message: string) => {
+    console.error(message);
+    process.exit(1);
 };
 
-const main = async () => {
-    const npmLsElectronResult = runNpmLsElectron();
-    const installedElectronVersion =
-        JSON.parse(npmLsElectronResult).dependencies.electron.version;
+type ElectronReleases = { version: string; chrome: string; node: string }[];
 
+const find = (electronReleases: ElectronReleases, version: string) =>
+    electronReleases.find(release => release.version === version) ??
+    fail(
+        `Found no info on Electron release ${version} in the list of all Electron releases at https://releases.electronjs.org/releases.json.`,
+    );
+
+const checkVersionsByLauncherEntry =
+    (electronReleases: ElectronReleases) =>
+    ([launcherVersionRange, expectedVersions]: [
+        string,
+        { electron: string; chrome: string; node: string },
+    ]): void => {
+        const electronRelease = find(
+            electronReleases,
+            expectedVersions.electron,
+        );
+
+        if (
+            electronRelease.node !== expectedVersions.node ||
+            !electronRelease.chrome.startsWith(expectedVersions.chrome)
+        ) {
+            const chromeWithoutBuild = electronRelease.chrome
+                .split('.')
+                .slice(0, 3)
+                .join('.');
+
+            fail(
+                `Version mismatch! For the launcher version range ${launcherVersionRange}, 'config/versions.ts' contains the following entry:
+
+    '${launcherVersionRange}': {
+        electron: '${expectedVersions.electron}',
+        chrome: '${expectedVersions.chrome}',
+        node: '${expectedVersions.node}',
+    },
+
+but according to the electron release it should be:
+
+    '${launcherVersionRange}': {
+        electron: '${electronRelease.version}',
+        chrome: '${chromeWithoutBuild}',
+        node: '${electronRelease.node}',
+    },
+`,
+            );
+        }
+    };
+
+const main = async () => {
     const electronReleases = await (
         await fetch('https://releases.electronjs.org/releases.json')
     ).json();
-    const currentElectronRelease = electronReleases.find(
-        (release: { version: string }) =>
-            release.version === installedElectronVersion,
+    Object.entries(versionsByLauncherVersion).forEach(
+        checkVersionsByLauncherEntry(electronReleases),
     );
-
-    if (
-        currentElectronRelease.version !== versions.electron ||
-        currentElectronRelease.chrome !== versions.chrome ||
-        currentElectronRelease.node !== versions.node
-    ) {
-        console.error(
-            `Version mismatch! scripts/versions.ts contains the following versions:
-
-- electron: ${versions.electron}
-- chrome: ${versions.chrome}
-- node: ${versions.node}
-
-but it should contain these:
-
-- electron: ${currentElectronRelease.version}
-- chrome: ${currentElectronRelease.chrome}
-- node: ${currentElectronRelease.node}
-`,
-        );
-        process.exit(1);
-    }
 };
 
 main();

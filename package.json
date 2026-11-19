@@ -11,6 +11,7 @@
     "bin": {
         "check-for-typescript": "scripts/check-for-typescript.ts",
         "check-app-properties": "scripts/check-app-properties.ts",
+        "set-minimal-launcher": "scripts/set-minimal-launcher.ts",
         "nrfconnect-license": "scripts/nrfconnect-license.ts",
         "run-esbuild": "scripts/build-app.ts"
     },
@@ -57,9 +58,9 @@
         "applicationinsights": "^2.9.6",
         "autoprefixer": "10.4.14",
         "bootstrap": "4.6.2",
+        "chalk": "4.1.2",
         "commander": "10.0.0",
         "date-fns": "2.29.3",
-        "electron": "^43.8.6",
         "electron-store": "8.1.0",
         "esbuild": "^0.27.2",
         "esbuild-sass-plugin": "^3.6.0",
@@ -124,7 +125,11 @@
         "zod-validation-error": "^1.5.0"
     },
     "devDependencies": {
-        "@commander-js/extra-typings": "^10.0.3"
+        "@commander-js/extra-typings": "^10.0.3",
+        "electron": "32.1.2"
+    },
+    "peerDependencies": {
+        "electron": "32.1.2 || 43.4.0 || 43.8.6"
     },
     "typings": "./dist/typings/src/index.d.ts",
     "prettier": "./config/prettier.config.js"
