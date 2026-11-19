@@ -3,12 +3,13 @@ name: PR checklist
 on:
     workflow_call:
 
+permissions:
+    pull-requests: read
+
 jobs:
     checklist:
         name: PR checklist
         runs-on: ubuntu-latest
-        permissions:
-            pull-requests: read
         concurrency:
             group: pr-checklist-${{ github.event.pull_request.number }}
             cancel-in-progress: true

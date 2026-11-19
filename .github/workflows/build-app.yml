@@ -15,6 +15,10 @@ on:
             version:
                 value: ${{ jobs.build.outputs.version }}
 
+permissions:
+    contents: read
+    pull-requests: write
+
 env:
     ARTIFACT_NAME: ${{ github.event.repository.name }}
     GH_TOKEN: ${{ github.token }}

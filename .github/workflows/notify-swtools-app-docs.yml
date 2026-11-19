@@ -22,6 +22,8 @@ on:
         type: string
         required: true
 
+permissions: {}
+
 jobs:
   notify:
     runs-on: ubuntu-latest
