@@ -64,8 +64,12 @@ const $root = (
                         id: 3,
                     },
                     type: {
+                        // The DFU bootloader requires this field even for APPLICATION (0).
                         type: 'FwType',
                         id: 4,
+                        options: {
+                            features: { field_presence: 'EXPLICIT' },
+                        },
                     },
                     sdSize: {
                         type: 'uint32',
