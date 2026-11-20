@@ -9,6 +9,10 @@ every new version is a new major version.
 
 ## 264.0.0 - UNRELEASED
 
+### Fixed
+
+- Fixed an issue where application DFU init packets omitted the firmware type.
+
 ### Changed
 
 - Updated Nordic Thingy:91 X PCA number.
