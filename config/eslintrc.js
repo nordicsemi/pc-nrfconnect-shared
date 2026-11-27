@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-const fs = require('fs');
+const fs = require('node:fs');
 
 const entriesInGitignore = fs
     .readFileSync('.gitignore', 'utf8')
@@ -46,6 +46,7 @@ module.exports = {
             { fixStyle: 'inline-type-imports' },
         ],
         'import/default': 'error',
+        'import/enforce-node-protocol-usage': ['error', 'always'],
         'import/extensions': 'off',
         'import/named': 'error',
         'import/no-extraneous-dependencies': 'off',

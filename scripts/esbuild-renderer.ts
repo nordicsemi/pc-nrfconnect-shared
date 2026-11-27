@@ -45,6 +45,7 @@ const options = (
         logLevel: 'info',
         external: [
             ...module.builtinModules,
+            'node:*',
 
             // launcher includes
             'electron',

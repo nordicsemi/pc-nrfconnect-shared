@@ -6,9 +6,9 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { execSync } from 'child_process';
-import { existsSync, readdirSync, readFileSync } from 'fs';
 import property from 'lodash/property';
+import { execSync } from 'node:child_process';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 
 import {
     type PackageJsonApp,

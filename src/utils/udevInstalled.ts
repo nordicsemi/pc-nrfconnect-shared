@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 
 export default () => {
     if (process.platform !== 'linux') {

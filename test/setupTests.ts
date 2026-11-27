@@ -23,7 +23,7 @@ if (
     typeof globalThis.TextDecoder === 'undefined'
 ) {
     // eslint-disable-next-line global-require, @typescript-eslint/no-require-imports
-    const utils = require('util');
+    const utils = require('node:util');
     globalThis.TextEncoder = utils.TextEncoder;
     globalThis.TextDecoder = utils.TextDecoder;
 }

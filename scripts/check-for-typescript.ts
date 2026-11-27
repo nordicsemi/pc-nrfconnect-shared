@@ -6,9 +6,9 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { spawnSync } from 'child_process';
-import { existsSync } from 'fs';
 import klaw from 'klaw';
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 const launchNextCommand = () => {
     const [, , command, ...args] = process.argv;

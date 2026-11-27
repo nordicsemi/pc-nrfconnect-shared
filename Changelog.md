@@ -12,6 +12,13 @@ every new version is a new major version.
 ### Changed
 
 - Updated Nordic Thingy:91 X PCA number.
+- When importing Node built-in modules, it is now mandatory to use the `node:`
+  prefix (e.g. not `fs` but `node:fs`)
+
+### Steps to upgrade when using this package
+
+- Run `npm run check:lint -- --fix` to fix cases where the `node:` prefix was
+  not used.
 
 ## 263.0.0 - 2026-11-03
 

@@ -6,8 +6,8 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import { existsSync } from 'fs';
 import { install as installHusky } from 'husky';
+import { existsSync } from 'node:fs';
 
 if (existsSync('.git')) {
     installHusky();

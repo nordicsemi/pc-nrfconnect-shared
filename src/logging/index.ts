@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import path from 'path';
+import path from 'node:path';
 import { SPLAT } from 'triple-beam';
 import {
     createLogger,

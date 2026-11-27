@@ -9,7 +9,7 @@ import type {
     SetOptions,
     UpdateOptions,
 } from '@serialport/bindings-cpp';
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 import type { SerialPortOpenOptions } from 'serialport';
 
 import { forMain, inMain, type OverwriteOptions } from '../../ipc/serialPort';

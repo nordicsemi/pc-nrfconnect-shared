@@ -5,7 +5,7 @@
  */
 
 import { type Terminal } from '@xterm/headless';
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 
 import logger from '../logging';
 import { type SerialPort } from '../SerialPort/SerialPort';
