@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-import fs from 'fs';
-import { EOL } from 'os';
-import path from 'path';
+import fs from 'node:fs';
+import { EOL } from 'node:os';
+import path from 'node:path';
 import pretty from 'prettysize';
 import si from 'systeminformation';
 

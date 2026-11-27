@@ -7,7 +7,7 @@
  */
 
 import glob from 'fast-glob';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const SHEBANG_LINE = /^#!.*?(\r?\n)+/;
 const SPECIAL_REGEXP_CHARACTERS = /([.*+\\(){}[\]])/g;

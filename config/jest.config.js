@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-4-Clause
  */
 
-const path = require('path');
+const path = require('node:path');
 
 const mockDir = path.join(__dirname, '..', 'mocks');
 

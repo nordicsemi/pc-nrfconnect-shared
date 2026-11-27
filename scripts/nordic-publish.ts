@@ -8,10 +8,10 @@
 
 /* eslint-disable max-classes-per-file, class-methods-use-this */
 
-import { execSync } from 'child_process';
 import { Option, program } from 'commander';
-import fs from 'fs';
 import LowlevelFtpClient from 'ftp';
+import { execSync } from 'node:child_process';
+import fs from 'node:fs';
 import semver from 'semver';
 import calculateShasum from 'shasum';
 

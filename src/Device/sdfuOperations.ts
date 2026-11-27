@@ -5,8 +5,8 @@
  */
 
 import AdmZip from 'adm-zip';
-import { createHash } from 'crypto';
-import fs from 'fs';
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
 import MemoryMap from 'nrf-intel-hex';
 
 import NrfutilDeviceLib from '../../nrfutil/device/device';
